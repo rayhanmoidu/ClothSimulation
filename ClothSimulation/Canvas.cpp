@@ -4,6 +4,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+Canvas::Canvas() {
+}
+
 Canvas::Canvas(int screenWidth, int screenHeight, char* windowTitle) {
     title = windowTitle;
     window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, nullptr, nullptr);

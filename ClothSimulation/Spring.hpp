@@ -16,7 +16,7 @@ class Spring {
 public:
     Spring(Particle, Particle, float, float, float);
     void applyInternalSpringForces();
-    void applyAdditionalForce(Eigen::Array3f (*)(Particle));
+    void applyAdditionalForce(Eigen::Vector3f (*)(Particle));
     void stepForward(float);
     
     vector<Particle> getParticles();

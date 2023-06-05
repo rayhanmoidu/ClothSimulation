@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A32EE9EC2A2D8FDA005CA6B5 /* Simulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A32EE9EA2A2D8FDA005CA6B5 /* Simulation.cpp */; };
 		A39EB90F2A1C54AA00F4C1E6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB90E2A1C54AA00F4C1E6 /* main.cpp */; };
 		A39EB91A2A1C559B00F4C1E6 /* Canvas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB9182A1C559B00F4C1E6 /* Canvas.cpp */; };
 		A39EB91D2A1C564B00F4C1E6 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A39EB91C2A1C564B00F4C1E6 /* OpenGL.framework */; };
@@ -44,6 +45,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A32EE9EA2A2D8FDA005CA6B5 /* Simulation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Simulation.cpp; sourceTree = "<group>"; };
+		A32EE9EB2A2D8FDA005CA6B5 /* Simulation.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Simulation.hpp; sourceTree = "<group>"; };
 		A39EB90B2A1C54AA00F4C1E6 /* ClothSimulation */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ClothSimulation; sourceTree = BUILT_PRODUCTS_DIR; };
 		A39EB90E2A1C54AA00F4C1E6 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		A39EB9182A1C559B00F4C1E6 /* Canvas.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Canvas.cpp; sourceTree = "<group>"; };
@@ -94,6 +97,8 @@
 			isa = PBXGroup;
 			children = (
 				A39EB90E2A1C54AA00F4C1E6 /* main.cpp */,
+				A32EE9EA2A2D8FDA005CA6B5 /* Simulation.cpp */,
+				A32EE9EB2A2D8FDA005CA6B5 /* Simulation.hpp */,
 				A39EB9182A1C559B00F4C1E6 /* Canvas.cpp */,
 				A39EB9192A1C559B00F4C1E6 /* Canvas.hpp */,
 				A39EB9252A1D688E00F4C1E6 /* Particle.cpp */,
@@ -174,6 +179,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A32EE9EC2A2D8FDA005CA6B5 /* Simulation.cpp in Sources */,
 				A39EB90F2A1C54AA00F4C1E6 /* main.cpp in Sources */,
 				A39EB9272A1D688E00F4C1E6 /* Particle.cpp in Sources */,
 				A39EB92D2A1D890200F4C1E6 /* Spring.cpp in Sources */,

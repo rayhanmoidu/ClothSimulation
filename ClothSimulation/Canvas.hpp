@@ -15,23 +15,23 @@
 using namespace std;
 
 class Canvas {
-    public:
-        Canvas(int screenWidth, int screenHeight, char* windowTitle);
-    
-        void initCanvas();
-        void drawParticles(vector<Particle> particles);
-        void drawSpring(Spring);
-    
-        // getters
-        GLFWwindow* getWindow();
-        int getHeight();
-        int getWidth();
+public:
+    Canvas(int screenWidth, int screenHeight, char* windowTitle);
+    Canvas();
+    void initCanvas();
+    void drawParticles(vector<Particle> particles);
+    void drawSpring(Spring);
 
-    private:
-        int width;
-        int height;
-        string title;
-        GLFWwindow *window;
+    // getters
+    GLFWwindow* getWindow();
+    int getHeight();
+    int getWidth();
+
+private:
+    int width;
+    int height;
+    string title;
+    GLFWwindow *window;
 };
 
 
