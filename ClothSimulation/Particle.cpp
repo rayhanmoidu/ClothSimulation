@@ -15,16 +15,24 @@ Particle::Particle() {
     mass = Eigen::Matrix3f::Identity();
 }
 
-Particle::Particle(Eigen::Vector3f curPos, Eigen::Vector3f v0, float m) {
+Particle::Particle(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m) {
     position = curPos;
-    oldPosition = curPos;
+    oldPosition = oldPos;
     mass = Eigen::Matrix3f::Identity() * m;
-    velocity = v0;
+    velocity = Eigen::Vector3f(0, 0, 0);
 }
 
-Eigen::Vector3f Particle::getVelocity() {
-    return velocity;
+Particle::Particle(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m, vector<Eigen::Vector3f (*)(Particle, float)> forces, float time) {
+    position = curPos;
+    oldPosition = oldPos;
+    mass = Eigen::Matrix3f::Identity() * m;
+    forceAccumulator = forces;
+    computeResultingForce(time);
 }
+
+//Eigen::Vector3f Particle::getVelocity() {
+//    return velocity;
+//}
 
 float Particle::getX() {
     return position[0];
@@ -38,63 +46,69 @@ float Particle::getZ() {
     return position[2];
 }
 
+void Particle::assignNewPosition(Eigen::Vector3f newPosition) {
+    oldPosition = position;
+    position = newPosition;
+}
+
 Eigen::Vector3f Particle::getPosition() {
     return position;
 }
 
-Eigen::Vector3f Particle::computeResultingForce() {
+void Particle::computeResultingForce(float time) {
     Eigen::Vector3f result(0, 0, 0);
+    //cout << "lla"<<forceAccumulator.size()<<endl;
     for (int i = 0; i < forceAccumulator.size(); i++) {
-        result += forceAccumulator[i];
+        result += forceAccumulator[i](*this, time);
     }
-    return result;
+    //cout << "hihi"<<result<<endl;
+    resultingForce = result;
 }
 
-void Particle::resetForces(vector<Eigen::Vector3f> newForces) {
-    forceAccumulator = newForces;
-    resultingForce = computeResultingForce();
+void Particle::resetForces() {
+    forceAccumulator.clear();
 }
 
-void Particle::applyExternalForce(Eigen::Vector3f newForce) {
+void Particle::addExternalForce(Eigen::Vector3f (*newForce)(Particle, float)) {
     forceAccumulator.push_back(newForce);
-    resultingForce = computeResultingForce();
 }
 
-//void Particle::computeNextVelocity(float timeStep) {
-//    cout << this->forceAccumulator.size()<<endl;
-//    for (int i = 0; i < this->forceAccumulator.size(); i++) {
-//        cout << this->forceAccumulator[i]<<endl;
-//    }
-    //cout<<resultingForce<<endl;
-    //velocity = velocity + timeStep * (resultingForce * mass.inverse());
-//}
+Eigen::Vector3f Particle::computeNextVelocity(float timeStep) {
+    return velocity + timeStep * (mass.inverse() * resultingForce);
+}
 
 Eigen::Matrix3f Particle::getMass() {
     return mass;
 }
 
+Eigen::Vector3f Particle::getResultingForce() {
+    return resultingForce;
+}
+
 void Particle::stepForward(float timeStep) {
-//    Eigen::Vector3f nextForce = resultingForce + (resultingForce.)
-    //Eigen::Vector3f newpos = 2*position - oldPosition + (timeStep*timeStep)*(mass.inverse())*(resultingForce);
-    Eigen::Vector3f y = 2*position - oldPosition;
-    Eigen::Vector3f rhs = mass * y;
-    float xCoefficient = mass.diagonal()[0] + timeStep*timeStep*14000/200;
-    float yCoefficient = mass.diagonal()[0];
-    float zCoefficient = mass.diagonal()[0];
-    Eigen::Vector3f newpos = Eigen::Vector3f((rhs[0] + timeStep*timeStep*14000)/xCoefficient, rhs[1]/yCoefficient, rhs[2]/zCoefficient);
-    cout << newpos << endl;
+    velocity = computeNextVelocity(timeStep);
+    Eigen::Vector3f newpos = position + timeStep * velocity;
     oldPosition = position;
     position = newpos;
 }
 
-//void Particle::optimizationImplicitEuler() {
-//    bool converged = false;
-//    Eigen::Vector3f curGuessPoint = Eigen::Vector3f(0, 0, 0);
-//    while (!converged) {
-//        curGuessPoint =
-//    }
-//}
-//
-//void Particle::evaluateGradient(float timeStep, Eigen::Vector3f point) {
-//    Eigen::Vector3f nextForces = computeForceOnParticle(
-//}
+Eigen::Vector3f Particle::evaluateGradient(Eigen::Vector3f newPosition, float timeStep, float time) {
+    Particle nextPos = Particle(newPosition, position, mass.diagonal()[0], forceAccumulator, time);
+    Eigen::Vector3f y = 2*position - oldPosition;
+    Eigen::Vector3f clause2 = mass * (newPosition - y);
+    Eigen::Vector3f clause1 = (timeStep * timeStep) * nextPos.getResultingForce();
+    return clause2 - clause1;
+}
+
+Eigen::Matrix3f Particle::evaluateHessian(Eigen::Vector3f newPosition, float timeStep, float time) {
+    Eigen::Matrix3f m;
+    float x = newPosition[0];
+    float y = newPosition[1];
+    float koverr = -14000/200;
+    m << koverr, 0, 0,
+         0, 0, 0,
+         0, 0, 0;
+    
+    Eigen::Matrix3f clause2 = timeStep*timeStep*m;
+    return mass - clause2;
+}
