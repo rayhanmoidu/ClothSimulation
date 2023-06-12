@@ -7,7 +7,7 @@
 
 #include "Simulation.hpp"
 
-Simulation::Simulation(float newTimeStep, vector<SpringEndpoint> newParticles, Canvas newCanvas, StateComputationMode curMode) {
+Simulation::Simulation(float newTimeStep, vector<SpringEndpoint*> newParticles, Canvas newCanvas, StateComputationMode curMode) {
     timeStep = newTimeStep;
     time = 0;
     particles = newParticles;
@@ -26,7 +26,7 @@ void Simulation::update() {
 }
 
 Eigen::Vector3f Simulation::applyNewtonsMethod(SpringEndpoint p) {
-    Eigen::Vector3f curGuessPosition = Eigen::Vector3f(5, 6, 7);
+    Eigen::Vector3f curGuessPosition = Eigen::Vector3f(1, 1, 1);
     Eigen::Vector3f gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
     int numIts = 1;
     while (gradient.squaredNorm() > __FLT_EPSILON__) {
@@ -37,21 +37,22 @@ Eigen::Vector3f Simulation::applyNewtonsMethod(SpringEndpoint p) {
         gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
         numIts++;
     }
+    //cout << curGuessPosition << endl;
     //cout << numIts << endl;
     return curGuessPosition;
 }
 
 void Simulation::optimizationImplicitEuler() {
     for (int i = 0; i < particles.size(); i++) {
-        Eigen::Vector3f newParticlePosition = applyNewtonsMethod(particles[i]);
+        Eigen::Vector3f newParticlePosition = applyNewtonsMethod(*particles[i]);
         //cout << newParticlePosition << endl;
-        particles[i].assignNewPosition(newParticlePosition);
+        particles[i]->assignNewPosition(newParticlePosition);
     }
 }
 
 void Simulation::timeStepping() {
     for (int i = 0; i < particles.size(); i++) {
-        particles[i].stepForward(timeStep);
+        particles[i]->stepForward(timeStep);
     }
 }
 
@@ -66,16 +67,16 @@ void Simulation::computeNewParticleStates(StateComputationMode mode) {
     }
 }
 
-void Simulation::addExternalForce(Eigen::Vector3f (*newForce)(SpringEndpoint, float)) {
+void Simulation::addExternalForce(Eigen::Vector3f (*newForce)(SpringEndpoint, SpringEndpoint, float)) {
     externalForces.push_back(newForce);
 }
 
 void Simulation::applyExternalForces() {
     for (int i = 0; i < particles.size(); i++) {
-        particles[i].resetForces();
+        particles[i]->resetForces();
         for (int j = 0; j < externalForces.size(); j++) {
-            particles[i].addExternalForce(externalForces[i]);
+            particles[i]->addExternalForce(externalForces[j]);
         }
-        particles[i].computeResultingForce(time);
+        particles[i]->computeResultingForce(time);
     }
 }

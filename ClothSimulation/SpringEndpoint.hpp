@@ -18,7 +18,7 @@ using namespace std;
 class SpringEndpoint {
 public:
     SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float);
-    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float, vector<Eigen::Vector3f (*)(SpringEndpoint, float)>, float);
+    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float, vector<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float)>, float, vector<SpringEndpoint*> neighbours);
     SpringEndpoint();
     
     // adjusting positions
@@ -27,7 +27,7 @@ public:
     
     // forces
     void resetForces();
-    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, float));
+    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float));
     void computeResultingForce(float);
     
     // evaluation helpers
@@ -41,7 +41,10 @@ public:
     Eigen::Vector3f getPosition();
     Eigen::Matrix3f getMass();
     Eigen::Vector3f getResultingForce();
-//    Eigen::Vector3f getVelocity();
+    vector<SpringEndpoint*> getNeighbourEndpoints();
+    
+    // helpers
+    void addNeighbourEndpoint(SpringEndpoint*);
 private:
     Eigen::Vector3f computeNextVelocity(float);
     
@@ -51,8 +54,10 @@ private:
     Eigen::Matrix3f mass;
     Eigen::Vector3f velocity;
     
-    vector<Eigen::Vector3f (*)(SpringEndpoint, float)> forceAccumulator;
+    vector<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float)> forceAccumulator;
     Eigen::Vector3f resultingForce;
+    
+    vector<SpringEndpoint*> neighbourEndpoints;
 };
 
 #endif /* SpringEndpoint_hpp */

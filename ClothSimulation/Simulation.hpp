@@ -22,9 +22,9 @@ enum StateComputationMode {
 
 class Simulation {
 public:
-    Simulation(float, vector<SpringEndpoint>, Canvas, StateComputationMode);
+    Simulation(float, vector<SpringEndpoint*>, Canvas, StateComputationMode);
     void update();
-    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, float));
+    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float));
 private:
     void computeNewParticleStates(StateComputationMode);
     void applyExternalForces();
@@ -35,8 +35,8 @@ private:
     
     Eigen::Vector3f applyNewtonsMethod(SpringEndpoint);
     
-    vector<SpringEndpoint> particles;
-    vector<Eigen::Vector3f (*)(SpringEndpoint, float)> externalForces;
+    vector<SpringEndpoint*> particles;
+    vector<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float)> externalForces;
     float time;
     float timeStep;
     Canvas canvas;

@@ -29,22 +29,28 @@ void Canvas::initCanvas() {
     glfwPollEvents();
 }
 
-void Canvas::drawParticles(vector<SpringEndpoint> particles) {
+void Canvas::drawParticles(vector<SpringEndpoint*> particles) {
     glColor3f(0.5f, 0.5f, 0.5f);
     int particleSize = 10;
     for (int i = 0; i < particles.size(); i++) {
+        vector<SpringEndpoint*> particleNeighbours = particles[i]->getNeighbourEndpoints();
+        for (int j = 0; j < particleNeighbours.size(); j++) {
+            glBegin(GL_LINES);
+            glVertex2f(particles[i]->getX(), particles[i]->getY());
+            glVertex2f(particleNeighbours[j]->getX(), particleNeighbours[j]->getY());
+            glEnd();
+        }
         glBegin(GL_QUADS);
-        
-        glVertex2f(particles[i].getX()-particleSize, particles[i].getY()-particleSize);
-        glVertex2f(particles[i].getX()+particleSize, particles[i].getY()-particleSize);
-        glVertex2f(particles[i].getX()+particleSize, particles[i].getY()+particleSize);
-        glVertex2f(particles[i].getX()-particleSize, particles[i].getY()+particleSize);
+        glVertex2f(particles[i]->getX()-particleSize, particles[i]->getY()-particleSize);
+        glVertex2f(particles[i]->getX()+particleSize, particles[i]->getY()-particleSize);
+        glVertex2f(particles[i]->getX()+particleSize, particles[i]->getY()+particleSize);
+        glVertex2f(particles[i]->getX()-particleSize, particles[i]->getY()+particleSize);
         glEnd();
     }
 }
 
 void Canvas::drawSpring(Spring s) {
-    drawParticles(s.getParticles());
+    //drawParticles(s.getParticles());
 }
 
 GLFWwindow* Canvas::getWindow() {

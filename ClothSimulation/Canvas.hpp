@@ -19,7 +19,7 @@ public:
     Canvas(int screenWidth, int screenHeight, char* windowTitle);
     Canvas();
     void initCanvas();
-    void drawParticles(vector<SpringEndpoint> particles);
+    void drawParticles(vector<SpringEndpoint*> particles);
     void drawSpring(Spring);
 
     // getters
