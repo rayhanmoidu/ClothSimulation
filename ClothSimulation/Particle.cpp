@@ -57,11 +57,9 @@ Eigen::Vector3f Particle::getPosition() {
 
 void Particle::computeResultingForce(float time) {
     Eigen::Vector3f result(0, 0, 0);
-    //cout << "lla"<<forceAccumulator.size()<<endl;
     for (int i = 0; i < forceAccumulator.size(); i++) {
         result += forceAccumulator[i](*this, time);
     }
-    //cout << "hihi"<<result<<endl;
     resultingForce = result;
 }
 

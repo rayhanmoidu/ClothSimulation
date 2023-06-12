@@ -30,21 +30,21 @@ Eigen::Vector3f Simulation::applyNewtonsMethod(Particle p) {
     Eigen::Vector3f gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
     int numIts = 1;
     while (gradient.squaredNorm() > __FLT_EPSILON__) {
-        cout <<"hello..."<<endl;
+        //cout <<"hello..."<<endl;
         Eigen::Matrix3f hessian = p.evaluateHessian(curGuessPosition, timeStep, time);
         Eigen::Vector3f nextGuessPosition = curGuessPosition - hessian.inverse()*gradient;
         curGuessPosition = nextGuessPosition;
         gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
         numIts++;
     }
-    cout << numIts << endl;
+    //cout << numIts << endl;
     return curGuessPosition;
 }
 
 void Simulation::optimizationImplicitEuler() {
     for (int i = 0; i < particles.size(); i++) {
         Eigen::Vector3f newParticlePosition = applyNewtonsMethod(particles[i]);
-        cout << newParticlePosition << endl;
+        //cout << newParticlePosition << endl;
         particles[i].assignNewPosition(newParticlePosition);
     }
 }
