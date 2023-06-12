@@ -1,28 +1,28 @@
 //
-//  Particle.cpp
+//  SpringEndpoint.cpp
 //  ClothSimulation
 //
 //  Created by Rayhan Moidu on 2023-05-23.
 //
 
-#include "Particle.hpp"
+#include "SpringEndpoint.hpp"
 #include <iostream>
 
-Particle::Particle() {
+SpringEndpoint::SpringEndpoint() {
     position = Eigen::Vector3f(0, 0, 0);
     oldPosition = Eigen::Vector3f(0, 0, 0);
     velocity = Eigen::Vector3f(0, 0, 0);
     mass = Eigen::Matrix3f::Identity();
 }
 
-Particle::Particle(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m) {
+SpringEndpoint::SpringEndpoint(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m) {
     position = curPos;
     oldPosition = oldPos;
     mass = Eigen::Matrix3f::Identity() * m;
     velocity = Eigen::Vector3f(0, 0, 0);
 }
 
-Particle::Particle(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m, vector<Eigen::Vector3f (*)(Particle, float)> forces, float time) {
+SpringEndpoint::SpringEndpoint(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m, vector<Eigen::Vector3f (*)(SpringEndpoint, float)> forces, float time) {
     position = curPos;
     oldPosition = oldPos;
     mass = Eigen::Matrix3f::Identity() * m;
@@ -30,32 +30,28 @@ Particle::Particle(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m, vect
     computeResultingForce(time);
 }
 
-//Eigen::Vector3f Particle::getVelocity() {
-//    return velocity;
-//}
-
-float Particle::getX() {
+float SpringEndpoint::getX() {
     return position[0];
 }
 
-float Particle::getY() {
+float SpringEndpoint::getY() {
     return position[1];
 }
 
-float Particle::getZ() {
+float SpringEndpoint::getZ() {
     return position[2];
 }
 
-void Particle::assignNewPosition(Eigen::Vector3f newPosition) {
+void SpringEndpoint::assignNewPosition(Eigen::Vector3f newPosition) {
     oldPosition = position;
     position = newPosition;
 }
 
-Eigen::Vector3f Particle::getPosition() {
+Eigen::Vector3f SpringEndpoint::getPosition() {
     return position;
 }
 
-void Particle::computeResultingForce(float time) {
+void SpringEndpoint::computeResultingForce(float time) {
     Eigen::Vector3f result(0, 0, 0);
     for (int i = 0; i < forceAccumulator.size(); i++) {
         result += forceAccumulator[i](*this, time);
@@ -63,42 +59,42 @@ void Particle::computeResultingForce(float time) {
     resultingForce = result;
 }
 
-void Particle::resetForces() {
+void SpringEndpoint::resetForces() {
     forceAccumulator.clear();
 }
 
-void Particle::addExternalForce(Eigen::Vector3f (*newForce)(Particle, float)) {
+void SpringEndpoint::addExternalForce(Eigen::Vector3f (*newForce)(SpringEndpoint, float)) {
     forceAccumulator.push_back(newForce);
 }
 
-Eigen::Vector3f Particle::computeNextVelocity(float timeStep) {
+Eigen::Vector3f SpringEndpoint::computeNextVelocity(float timeStep) {
     return velocity + timeStep * (mass.inverse() * resultingForce);
 }
 
-Eigen::Matrix3f Particle::getMass() {
+Eigen::Matrix3f SpringEndpoint::getMass() {
     return mass;
 }
 
-Eigen::Vector3f Particle::getResultingForce() {
+Eigen::Vector3f SpringEndpoint::getResultingForce() {
     return resultingForce;
 }
 
-void Particle::stepForward(float timeStep) {
+void SpringEndpoint::stepForward(float timeStep) {
     velocity = computeNextVelocity(timeStep);
     Eigen::Vector3f newpos = position + timeStep * velocity;
     oldPosition = position;
     position = newpos;
 }
 
-Eigen::Vector3f Particle::evaluateGradient(Eigen::Vector3f newPosition, float timeStep, float time) {
-    Particle nextPos = Particle(newPosition, position, mass.diagonal()[0], forceAccumulator, time);
+Eigen::Vector3f SpringEndpoint::evaluateGradient(Eigen::Vector3f newPosition, float timeStep, float time) {
+    SpringEndpoint nextPos = SpringEndpoint(newPosition, position, mass.diagonal()[0], forceAccumulator, time);
     Eigen::Vector3f y = 2*position - oldPosition;
     Eigen::Vector3f clause2 = mass * (newPosition - y);
     Eigen::Vector3f clause1 = (timeStep * timeStep) * nextPos.getResultingForce();
     return clause2 - clause1;
 }
 
-Eigen::Matrix3f Particle::evaluateHessian(Eigen::Vector3f newPosition, float timeStep, float time) {
+Eigen::Matrix3f SpringEndpoint::evaluateHessian(Eigen::Vector3f newPosition, float timeStep, float time) {
     Eigen::Matrix3f m;
     float x = newPosition[0];
     float y = newPosition[1];

@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <iostream>
-#include "Particle.hpp"
+#include "SpringEndpoint.hpp"
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -19,7 +19,7 @@ public:
     Canvas(int screenWidth, int screenHeight, char* windowTitle);
     Canvas();
     void initCanvas();
-    void drawParticles(vector<Particle> particles);
+    void drawParticles(vector<SpringEndpoint> particles);
     void drawSpring(Spring);
 
     // getters

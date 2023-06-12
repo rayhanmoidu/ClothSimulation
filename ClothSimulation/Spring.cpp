@@ -9,7 +9,7 @@
 #include <cmath>
 #include <iostream>
 
-Spring::Spring(Particle pp1, Particle pp2, float ks, float kd, float r) {
+Spring::Spring(SpringEndpoint pp1, SpringEndpoint pp2, float ks, float kd, float r) {
     restLength = r;
     springConstant = ks;
     dampingConstant = kd;
@@ -23,8 +23,8 @@ void Spring::stepForward(float timeStep) {
     p2.stepForward(timeStep);
 }
 
-vector<Particle> Spring::getParticles() {
-    vector<Particle> particles;
+vector<SpringEndpoint> Spring::getParticles() {
+    vector<SpringEndpoint> particles;
     particles.push_back(p1);
     particles.push_back(p2);
     return particles;
@@ -86,7 +86,7 @@ void Spring::applyInternalSpringForces() {
     //p2.resetForces(p2Forces);
 }
 
-void Spring::applyAdditionalForce(Eigen::Vector3f (*getAdditionalForce)(Particle)) {
+void Spring::applyAdditionalForce(Eigen::Vector3f (*getAdditionalForce)(SpringEndpoint)) {
 //    p1.applyExternalForce(getAdditionalForce(p1));
    // p2.addForce(getAdditionalForce(p2));
 }

@@ -29,7 +29,7 @@ void Canvas::initCanvas() {
     glfwPollEvents();
 }
 
-void Canvas::drawParticles(vector<Particle> particles) {
+void Canvas::drawParticles(vector<SpringEndpoint> particles) {
     glColor3f(0.5f, 0.5f, 0.5f);
     int particleSize = 10;
     for (int i = 0; i < particles.size(); i++) {

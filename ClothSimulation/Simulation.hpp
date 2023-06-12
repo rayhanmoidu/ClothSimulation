@@ -9,7 +9,7 @@
 #define Simulation_hpp
 
 #include <stdio.h>
-#include "Particle.hpp"
+#include "SpringEndpoint.hpp"
 #include "Canvas.hpp"
 #include <vector>
 #include <eigen3/Eigen/Core>
@@ -22,9 +22,9 @@ enum StateComputationMode {
 
 class Simulation {
 public:
-    Simulation(float, vector<Particle>, Canvas, StateComputationMode);
+    Simulation(float, vector<SpringEndpoint>, Canvas, StateComputationMode);
     void update();
-    void addExternalForce(Eigen::Vector3f (*)(Particle, float));
+    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, float));
 private:
     void computeNewParticleStates(StateComputationMode);
     void applyExternalForces();
@@ -33,10 +33,10 @@ private:
     void optimizationImplicitEuler();
     void timeStepping();
     
-    Eigen::Vector3f applyNewtonsMethod(Particle);
+    Eigen::Vector3f applyNewtonsMethod(SpringEndpoint);
     
-    vector<Particle> particles;
-    vector<Eigen::Vector3f (*)(Particle, float)> externalForces;
+    vector<SpringEndpoint> particles;
+    vector<Eigen::Vector3f (*)(SpringEndpoint, float)> externalForces;
     float time;
     float timeStep;
     Canvas canvas;

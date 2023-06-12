@@ -7,7 +7,7 @@
 
 #include "Simulation.hpp"
 
-Simulation::Simulation(float newTimeStep, vector<Particle> newParticles, Canvas newCanvas, StateComputationMode curMode) {
+Simulation::Simulation(float newTimeStep, vector<SpringEndpoint> newParticles, Canvas newCanvas, StateComputationMode curMode) {
     timeStep = newTimeStep;
     time = 0;
     particles = newParticles;
@@ -25,7 +25,7 @@ void Simulation::update() {
     time += timeStep;
 }
 
-Eigen::Vector3f Simulation::applyNewtonsMethod(Particle p) {
+Eigen::Vector3f Simulation::applyNewtonsMethod(SpringEndpoint p) {
     Eigen::Vector3f curGuessPosition = Eigen::Vector3f(5, 6, 7);
     Eigen::Vector3f gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
     int numIts = 1;
@@ -66,7 +66,7 @@ void Simulation::computeNewParticleStates(StateComputationMode mode) {
     }
 }
 
-void Simulation::addExternalForce(Eigen::Vector3f (*newForce)(Particle, float)) {
+void Simulation::addExternalForce(Eigen::Vector3f (*newForce)(SpringEndpoint, float)) {
     externalForces.push_back(newForce);
 }
 

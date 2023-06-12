@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A312E4D52A37B21400BB887F /* SpringEndpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A312E4D32A37B21400BB887F /* SpringEndpoint.cpp */; };
 		A32EE9EC2A2D8FDA005CA6B5 /* Simulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A32EE9EA2A2D8FDA005CA6B5 /* Simulation.cpp */; };
 		A39EB90F2A1C54AA00F4C1E6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB90E2A1C54AA00F4C1E6 /* main.cpp */; };
 		A39EB91A2A1C559B00F4C1E6 /* Canvas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB9182A1C559B00F4C1E6 /* Canvas.cpp */; };
@@ -15,7 +16,6 @@
 		A39EB9202A1C56D100F4C1E6 /* libGLEW.2.2.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = A39EB91E2A1C56D100F4C1E6 /* libGLEW.2.2.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A39EB9232A1C56EA00F4C1E6 /* libglfw.3.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A39EB9222A1C56E900F4C1E6 /* libglfw.3.3.dylib */; };
 		A39EB9242A1C56EA00F4C1E6 /* libglfw.3.3.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = A39EB9222A1C56E900F4C1E6 /* libglfw.3.3.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		A39EB9272A1D688E00F4C1E6 /* Particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB9252A1D688E00F4C1E6 /* Particle.cpp */; };
 		A39EB92A2A1D68BD00F4C1E6 /* Vec3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB9282A1D68BD00F4C1E6 /* Vec3.cpp */; };
 		A39EB92D2A1D890200F4C1E6 /* Spring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB92B2A1D890200F4C1E6 /* Spring.cpp */; };
 /* End PBXBuildFile section */
@@ -45,6 +45,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A312E4D32A37B21400BB887F /* SpringEndpoint.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SpringEndpoint.cpp; sourceTree = "<group>"; };
+		A312E4D42A37B21400BB887F /* SpringEndpoint.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SpringEndpoint.hpp; sourceTree = "<group>"; };
 		A32EE9EA2A2D8FDA005CA6B5 /* Simulation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Simulation.cpp; sourceTree = "<group>"; };
 		A32EE9EB2A2D8FDA005CA6B5 /* Simulation.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Simulation.hpp; sourceTree = "<group>"; };
 		A39EB90B2A1C54AA00F4C1E6 /* ClothSimulation */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ClothSimulation; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -54,8 +56,6 @@
 		A39EB91C2A1C564B00F4C1E6 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		A39EB91E2A1C56D100F4C1E6 /* libGLEW.2.2.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLEW.2.2.0.dylib; path = ../../../../../opt/homebrew/Cellar/glew/2.2.0_1/lib/libGLEW.2.2.0.dylib; sourceTree = "<group>"; };
 		A39EB9222A1C56E900F4C1E6 /* libglfw.3.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.3.dylib; path = ../../../../../opt/homebrew/Cellar/glfw/3.3.8/lib/libglfw.3.3.dylib; sourceTree = "<group>"; };
-		A39EB9252A1D688E00F4C1E6 /* Particle.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Particle.cpp; sourceTree = "<group>"; };
-		A39EB9262A1D688E00F4C1E6 /* Particle.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Particle.hpp; sourceTree = "<group>"; };
 		A39EB9282A1D68BD00F4C1E6 /* Vec3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Vec3.cpp; sourceTree = "<group>"; };
 		A39EB9292A1D68BD00F4C1E6 /* Vec3.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Vec3.hpp; sourceTree = "<group>"; };
 		A39EB92B2A1D890200F4C1E6 /* Spring.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Spring.cpp; sourceTree = "<group>"; };
@@ -97,12 +97,12 @@
 			isa = PBXGroup;
 			children = (
 				A39EB90E2A1C54AA00F4C1E6 /* main.cpp */,
+				A312E4D32A37B21400BB887F /* SpringEndpoint.cpp */,
+				A312E4D42A37B21400BB887F /* SpringEndpoint.hpp */,
 				A32EE9EA2A2D8FDA005CA6B5 /* Simulation.cpp */,
 				A32EE9EB2A2D8FDA005CA6B5 /* Simulation.hpp */,
 				A39EB9182A1C559B00F4C1E6 /* Canvas.cpp */,
 				A39EB9192A1C559B00F4C1E6 /* Canvas.hpp */,
-				A39EB9252A1D688E00F4C1E6 /* Particle.cpp */,
-				A39EB9262A1D688E00F4C1E6 /* Particle.hpp */,
 				A39EB9282A1D68BD00F4C1E6 /* Vec3.cpp */,
 				A39EB9292A1D68BD00F4C1E6 /* Vec3.hpp */,
 				A39EB92B2A1D890200F4C1E6 /* Spring.cpp */,
@@ -181,10 +181,10 @@
 			files = (
 				A32EE9EC2A2D8FDA005CA6B5 /* Simulation.cpp in Sources */,
 				A39EB90F2A1C54AA00F4C1E6 /* main.cpp in Sources */,
-				A39EB9272A1D688E00F4C1E6 /* Particle.cpp in Sources */,
 				A39EB92D2A1D890200F4C1E6 /* Spring.cpp in Sources */,
 				A39EB92A2A1D68BD00F4C1E6 /* Vec3.cpp in Sources */,
 				A39EB91A2A1C559B00F4C1E6 /* Canvas.cpp in Sources */,
+				A312E4D52A37B21400BB887F /* SpringEndpoint.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

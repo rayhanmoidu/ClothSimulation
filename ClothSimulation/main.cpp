@@ -12,14 +12,14 @@
 const GLint WIDTH = 500, HEIGHT = 500;
 const Eigen::Vector3f gravitationalConstant = Eigen::Vector3f(0, -9.81, 0);
 
-Eigen::Vector3f getSpringForce(Particle p, float timestep) {
+Eigen::Vector3f getSpringForce(SpringEndpoint p, float timestep) {
     float k = 14000;
     float r = 200;
     float displacement = p.getX();
     return Eigen::Vector3f(k * (abs(displacement)/r - 1) * (-displacement/abs(displacement)), 0, 0);
 }
 
-Eigen::Vector3f getGravitationalForce(Particle p, float timestep) {
+Eigen::Vector3f getGravitationalForce(SpringEndpoint p, float timestep) {
     return p.getMass()*gravitationalConstant;
 }
 
@@ -46,19 +46,19 @@ int main(int argc, const char * argv[]) {
         return -1;
     }
  
-    // PARTICLE
-    std::vector<Particle> particles1;
-    Particle startPos1(Eigen::Vector3f(100, 500, 0), Eigen::Vector3f(99, 500, 0), 5);
-    particles1.push_back(startPos1);
+    // SPRING ENDPOINTS
+    std::vector<SpringEndpoint> springEndpoints1;
+    SpringEndpoint startPos1(Eigen::Vector3f(100, 500, 0), Eigen::Vector3f(99, 500, 0), 5);
+    springEndpoints1.push_back(startPos1);
     
-    std::vector<Particle> particles2;
-    Particle startPos2(Eigen::Vector3f(100, 900, 0), Eigen::Vector3f(99, 900, 0), 5);
-    particles2.push_back(startPos2);
+    std::vector<SpringEndpoint> springEndpoints2;
+    SpringEndpoint startPos2(Eigen::Vector3f(100, 900, 0), Eigen::Vector3f(99, 900, 0), 5);
+    springEndpoints2.push_back(startPos2);
     
     float timeStep = 0.005;
     
-    Simulation simulation1(timeStep, particles1, canvas, OPTIMIZATION_IMPLICIT_EULER);
-    Simulation simulation2(timeStep, particles2, canvas, TIMESTEP);
+    Simulation simulation1(timeStep, springEndpoints1, canvas, OPTIMIZATION_IMPLICIT_EULER);
+    Simulation simulation2(timeStep, springEndpoints2, canvas, TIMESTEP);
     
     simulation1.addExternalForce(&getSpringForce);
     simulation2.addExternalForce(&getSpringForce);

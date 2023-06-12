@@ -1,12 +1,12 @@
 //
-//  Particle.hpp
+//  SpringEndpoint.hpp
 //  ClothSimulation
 //
 //  Created by Rayhan Moidu on 2023-05-23.
 //
 
-#ifndef Particle_hpp
-#define Particle_hpp
+#ifndef SpringEndpoint_hpp
+#define SpringEndpoint_hpp
 
 #include <stdio.h>
 #include <eigen3/Eigen/Core>
@@ -15,11 +15,11 @@
 
 using namespace std;
 
-class Particle {
+class SpringEndpoint {
 public:
-    Particle(Eigen::Vector3f, Eigen::Vector3f, float);
-    Particle(Eigen::Vector3f, Eigen::Vector3f, float, vector<Eigen::Vector3f (*)(Particle, float)>, float);
-    Particle();
+    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float);
+    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float, vector<Eigen::Vector3f (*)(SpringEndpoint, float)>, float);
+    SpringEndpoint();
     
     // adjusting positions
     void assignNewPosition(Eigen::Vector3f);
@@ -27,7 +27,7 @@ public:
     
     // forces
     void resetForces();
-    void addExternalForce(Eigen::Vector3f (*)(Particle, float));
+    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, float));
     void computeResultingForce(float);
     
     // evaluation helpers
@@ -51,8 +51,8 @@ private:
     Eigen::Matrix3f mass;
     Eigen::Vector3f velocity;
     
-    vector<Eigen::Vector3f (*)(Particle, float)> forceAccumulator;
+    vector<Eigen::Vector3f (*)(SpringEndpoint, float)> forceAccumulator;
     Eigen::Vector3f resultingForce;
 };
 
-#endif /* Particle_hpp */
+#endif /* SpringEndpoint_hpp */

@@ -9,23 +9,23 @@
 #define Spring_hpp
 
 #include <stdio.h>
-#include "Particle.hpp"
+#include "SpringEndpoint.hpp"
 #include <vector>
 
 class Spring {
 public:
-    Spring(Particle, Particle, float, float, float);
+    Spring(SpringEndpoint, SpringEndpoint, float, float, float);
     void applyInternalSpringForces();
-    void applyAdditionalForce(Eigen::Vector3f (*)(Particle));
+    void applyAdditionalForce(Eigen::Vector3f (*)(SpringEndpoint));
     void stepForward(float);
     
-    vector<Particle> getParticles();
+    vector<SpringEndpoint> getParticles();
 private:
     float restLength;
     float springConstant;
     float dampingConstant;
-    Particle p1;
-    Particle p2;
+    SpringEndpoint p1;
+    SpringEndpoint p2;
 };
 
 #endif /* Spring_hpp */
