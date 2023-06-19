@@ -16,31 +16,31 @@ Eigen::Vector3f getSpringForce(SpringEndpoint p1, SpringEndpoint p2, float times
     // before
     float k = 14000;
     float r = 200;
-    
+
     float displacementX = p1.getX() - p2.getX();
     float displacementY = p1.getY() - p2.getY();
-    float displacementZ = p1.getZ() - p2.getZ();
-    
-    float displacementXZ = sqrt(displacementX*displacementX + displacementZ*displacementZ);
-    float displacement = sqrt(displacementXZ*displacementXZ + displacementY*displacementY);
-    
+//    float displacementZ = p1.getZ() - p2.getZ();
+
+//    float displacementXZ = sqrt(displacementX*displacementX + displacementZ*displacementZ);
+    float displacement = sqrt(displacementX*displacementX + displacementY*displacementY);
+
     float force = k * (abs(displacement)/r - 1);
-    
-    float theta = atan(abs(displacementZ) / abs(displacementX));
-    float phi = atan(abs(displacementY) / abs(displacementXZ));
-    
+
+    float theta = atan(abs(displacementY) / abs(displacementX));
+//    float phi = atan(abs(displacementY) / abs(displacementXZ));
+
     float forceX = force * cos(theta);
-    float forceY = force * sin(phi);
-    float forceZ = force * sin(theta);
-    
+    float forceY = force * sin(theta);
+//    float forceZ = force * sin(theta);
+
     float dirX = (-displacementX/abs(displacementX));
     float dirY = (-displacementY/abs(displacementY));
-    float dirZ = (-displacementZ/abs(displacementZ));
-    
+//    float dirZ = (-displacementZ/abs(displacementZ));
+
     float fx = displacementX == 0 ? 0 : forceX * dirX;
     float fy = displacementY == 0 ? 0 : forceY * dirY;
-    float fz = displacementZ == 0 ? 0 : forceZ * dirZ;
-    
+//    float fz = displacementZ == 0 ? 0 : forceZ * dirZ;
+
     return Eigen::Vector3f(fx, fy, 0);
 }
 
@@ -101,7 +101,7 @@ int main(int argc, const char * argv[]) {
     //springEndpoints.push_back(springEndpoint2);
 
     
-    float timeStep = 0.005;
+    float timeStep = 0.05;
     
     Simulation simulation1(timeStep, springEndpoints, canvas, OPTIMIZATION_IMPLICIT_EULER);
     //Simulation simulation2(timeStep, springEndpoints2, canvas, TIMESTEP);
