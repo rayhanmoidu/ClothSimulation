@@ -208,6 +208,13 @@ void Simulation::optimizationImplicitEuler() {
     }
 }
 
+void Simulation::optimizationImplicitEuler_ByParticle() {
+    for (int i = 0; i < particles.size(); i++) {
+        Eigen::Vector3f newParticlePosition = applyNewtonsMethod(*particles[i]);
+        particles[i]->assignNewPosition(newParticlePosition);
+    }
+}
+
 void Simulation::timeStepping() {
     for (int i = 0; i < particles.size(); i++) {
         particles[i]->stepForward(timeStep);
@@ -221,6 +228,9 @@ void Simulation::computeNewParticleStates(StateComputationMode mode) {
             break;
         case OPTIMIZATION_IMPLICIT_EULER:
             optimizationImplicitEuler();
+            break;
+        case OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE:
+            optimizationImplicitEuler_ByParticle();
             break;
     }
 }
