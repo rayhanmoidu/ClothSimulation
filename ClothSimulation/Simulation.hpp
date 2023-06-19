@@ -33,7 +33,14 @@ private:
     void optimizationImplicitEuler();
     void timeStepping();
     
+    void evaluateHessian(Eigen::VectorXf);
+    void evaluateGradient(Eigen::VectorXf);
+    void evaluateMassMatrix();
+    Eigen::VectorXf getCurPosition();
+    Eigen::VectorXf getPrevPosition();
+    
     Eigen::Vector3f applyNewtonsMethod(SpringEndpoint);
+    Eigen::VectorXf applyNewtonsMethod_Test();
     
     vector<SpringEndpoint*> particles;
     vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>> externalForces;
@@ -41,6 +48,11 @@ private:
     float timeStep;
     Canvas canvas;
     StateComputationMode mode;
+    
+    Eigen::VectorXf gradient;
+    Eigen::MatrixXf hessian;
+    Eigen::MatrixXf massMatrix;
+    int n;
 };
 
 #endif /* Simulation_hpp */

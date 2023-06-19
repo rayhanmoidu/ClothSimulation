@@ -13,28 +13,35 @@ SpringEndpoint::SpringEndpoint() {
     oldPosition = Eigen::Vector3f(0, 0, 0);
     velocity = Eigen::Vector3f(0, 0, 0);
     mass = Eigen::Matrix3f::Identity();
+    id = -1;
 }
 
-SpringEndpoint::SpringEndpoint(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m) {
+SpringEndpoint::SpringEndpoint(int id_, Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m) {
     position = curPos;
     oldPosition = oldPos;
     mass = Eigen::Matrix3f::Identity() * m;
     velocity = Eigen::Vector3f(0, 0, 0);
+    id = id_;
+    
+}
+
+int SpringEndpoint::getID() {
+    return id;
 }
 
 vector<SpringEndpoint*> SpringEndpoint::getNeighbourEndpoints() {
     return neighbourEndpoints;
 }
 
-SpringEndpoint::SpringEndpoint(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m, vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>> forces, float time, vector<SpringEndpoint*> neighbours) {
-    position = curPos;
-    oldPosition = oldPos;
-    mass = Eigen::Matrix3f::Identity() * m;
-    forceAccumulator = forces;
-    neighbourEndpoints = neighbours;
-
-    computeResultingForce(time);
-}
+//SpringEndpoint::SpringEndpoint(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m, vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>> forces, float time, vector<SpringEndpoint*> neighbours) {
+//    position = curPos;
+//    oldPosition = oldPos;
+//    mass = Eigen::Matrix3f::Identity() * m;
+//    forceAccumulator = forces;
+//    neighbourEndpoints = neighbours;
+//
+//    computeResultingForce(time);
+//}
 
 float SpringEndpoint::getX() {
     return position[0];
@@ -55,6 +62,10 @@ void SpringEndpoint::assignNewPosition(Eigen::Vector3f newPosition) {
 
 Eigen::Vector3f SpringEndpoint::getPosition() {
     return position;
+}
+
+Eigen::Vector3f SpringEndpoint::getPreviousPosition() {
+    return oldPosition;
 }
 
 void SpringEndpoint::computeResultingForce(float time) {
@@ -111,6 +122,42 @@ Eigen::Vector3f SpringEndpoint::evaluateGradient(Eigen::Vector3f newPosition, fl
     Eigen::Vector3f clause2 = mass * (newPosition - y);
     Eigen::Vector3f clause1 = (timeStep * timeStep) * nextPos.getResultingForce();
     return clause2 - clause1;
+}
+
+Eigen::Vector3f SpringEndpoint::evaluateGradient_Test(Eigen::Vector3f newPosition, float timeStep, float time) {
+    SpringEndpoint nextPos = *this;
+    nextPos.assignNewPosition(newPosition);
+    nextPos.computeResultingForce(time);
+    return nextPos.getResultingForce();
+}
+
+vector<std::pair<int, Eigen::Matrix3f>> SpringEndpoint::evaluateHessian_Test(Eigen::Vector3f newPosition, float timeStep, float time) {
+    vector<std::pair<int, Eigen::Matrix3f>> output;
+    
+    for (int i = 0; i < neighbourEndpoints.size(); i++) {
+        int neighbourID = neighbourEndpoints[i]->getID();
+        Eigen::Matrix3f curHessianPortion;
+        curHessianPortion << 0, 0, 0,
+        0, 0, 0,
+        0, 0, 0;
+        
+        for (int i = 0; i < forceAccumulator.size(); i++) {
+            switch(forceAccumulator[i].second) {
+                case SPRING:
+                    curHessianPortion += evaluateHessian_Spring(newPosition);
+                    break;
+                case GRAVITY:
+                    curHessianPortion += evaluateHessian_Gravity(newPosition);
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        std::pair<int, Eigen::Matrix3f> newPair = std::pair<int, Eigen::Matrix3f>(neighbourID, curHessianPortion);
+        output.push_back(newPair);
+    }
+    return output;
 }
 
 Eigen::Matrix3f SpringEndpoint::evaluateHessian(Eigen::Vector3f newPosition, float timeStep, float time) {

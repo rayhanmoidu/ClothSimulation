@@ -73,9 +73,9 @@ int main(int argc, const char * argv[]) {
  
     // SPRING ENDPOINTS
     std::vector<SpringEndpoint*> springEndpoints;
-    SpringEndpoint* springEndpoint1 = new SpringEndpoint(Eigen::Vector3f(400, 500, 0), Eigen::Vector3f(400.5, 500, 0), 5);
-    SpringEndpoint* springEndpoint2 = new SpringEndpoint(Eigen::Vector3f(600, 500, 0), Eigen::Vector3f(600.5, 500, 0), 5);
-    SpringEndpoint* springEndpoint3 = new SpringEndpoint(Eigen::Vector3f(200, 500, 0), Eigen::Vector3f(199.5, 500, 0), 5);
+    SpringEndpoint* springEndpoint1 = new SpringEndpoint(0, Eigen::Vector3f(400, 500, 0), Eigen::Vector3f(400.5, 500, 0), 5);
+    SpringEndpoint* springEndpoint2 = new SpringEndpoint(1, Eigen::Vector3f(600, 500, 0), Eigen::Vector3f(600.5, 500, 0), 5);
+    SpringEndpoint* springEndpoint3 = new SpringEndpoint(2, Eigen::Vector3f(200, 500, 0), Eigen::Vector3f(199.5, 500, 0), 5);
     springEndpoint3->addNeighbourEndpoint(springEndpoint1);
     springEndpoint3->addNeighbourEndpoint(springEndpoint2);
     springEndpoint1->addNeighbourEndpoint(springEndpoint2);
@@ -83,7 +83,7 @@ int main(int argc, const char * argv[]) {
     springEndpoint2->addNeighbourEndpoint(springEndpoint1);
     springEndpoint2->addNeighbourEndpoint(springEndpoint3);
     
-    SpringEndpoint* springEndpoint4 = new SpringEndpoint(Eigen::Vector3f(500, 1000, 0), Eigen::Vector3f(500, 1000, 0), 5);
+    SpringEndpoint* springEndpoint4 = new SpringEndpoint(3, Eigen::Vector3f(500, 1000, 0), Eigen::Vector3f(500, 1000, 0), 5);
     springEndpoint1->addNeighbourEndpoint(springEndpoint4);
     springEndpoint2->addNeighbourEndpoint(springEndpoint4);
     springEndpoint3->addNeighbourEndpoint(springEndpoint4);
@@ -101,7 +101,7 @@ int main(int argc, const char * argv[]) {
     //springEndpoints.push_back(springEndpoint2);
 
     
-    float timeStep = 0.05;
+    float timeStep = 0.005;
     
     Simulation simulation1(timeStep, springEndpoints, canvas, OPTIMIZATION_IMPLICIT_EULER);
     //Simulation simulation2(timeStep, springEndpoints2, canvas, TIMESTEP);

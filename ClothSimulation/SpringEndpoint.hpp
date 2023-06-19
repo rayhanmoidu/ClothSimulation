@@ -22,8 +22,8 @@ enum ForceType {
 
 class SpringEndpoint {
 public:
-    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float);
-    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float, vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>>, float, vector<SpringEndpoint*> neighbours);
+    SpringEndpoint(int, Eigen::Vector3f, Eigen::Vector3f, float);
+//    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float, vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>>, float, vector<SpringEndpoint*> neighbours);
     SpringEndpoint();
     
     // adjusting positions
@@ -38,6 +38,8 @@ public:
     // evaluation helpers
     Eigen::Vector3f evaluateGradient(Eigen::Vector3f, float, float);
     Eigen::Matrix3f evaluateHessian(Eigen::Vector3f, float, float);
+    Eigen::Vector3f evaluateGradient_Test(Eigen::Vector3f, float, float);
+    vector<std::pair<int, Eigen::Matrix3f>> evaluateHessian_Test(Eigen::Vector3f, float, float);
     Eigen::Matrix3f evaluateHessian_Spring(Eigen::Vector3f);
     Eigen::Matrix3f evaluateHessian_Gravity(Eigen::Vector3f);
     
@@ -46,14 +48,18 @@ public:
     float getY();
     float getZ();
     Eigen::Vector3f getPosition();
+    Eigen::Vector3f getPreviousPosition();
     Eigen::Matrix3f getMass();
     Eigen::Vector3f getResultingForce();
     vector<SpringEndpoint*> getNeighbourEndpoints();
+    int getID();
     
     // helpers
     void addNeighbourEndpoint(SpringEndpoint*);
 private:
     Eigen::Vector3f computeNextVelocity(float);
+    
+    int id;
     
     Eigen::Vector3f position;
     Eigen::Vector3f oldPosition;
