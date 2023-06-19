@@ -24,7 +24,7 @@ class Simulation {
 public:
     Simulation(float, vector<SpringEndpoint*>, Canvas, StateComputationMode);
     void update();
-    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float));
+    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType);
 private:
     void computeNewParticleStates(StateComputationMode);
     void applyExternalForces();
@@ -36,7 +36,7 @@ private:
     Eigen::Vector3f applyNewtonsMethod(SpringEndpoint);
     
     vector<SpringEndpoint*> particles;
-    vector<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float)> externalForces;
+    vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>> externalForces;
     float time;
     float timeStep;
     Canvas canvas;

@@ -26,7 +26,7 @@ vector<SpringEndpoint*> SpringEndpoint::getNeighbourEndpoints() {
     return neighbourEndpoints;
 }
 
-SpringEndpoint::SpringEndpoint(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m, vector<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float)> forces, float time, vector<SpringEndpoint*> neighbours) {
+SpringEndpoint::SpringEndpoint(Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m, vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>> forces, float time, vector<SpringEndpoint*> neighbours) {
     position = curPos;
     oldPosition = oldPos;
     mass = Eigen::Matrix3f::Identity() * m;
@@ -62,7 +62,7 @@ void SpringEndpoint::computeResultingForce(float time) {
 //    for (int j = 0; j < neighbourEndpoints.size(); j++) {
         for (int i = 0; i < forceAccumulator.size(); i++) {
             for (int j = 0; j < neighbourEndpoints.size(); j++) {
-                result += forceAccumulator[i](*this, *neighbourEndpoints[j], time);
+                result += forceAccumulator[i].first(*this, *neighbourEndpoints[j], time);
             }
         }
 //    }
@@ -76,7 +76,7 @@ void SpringEndpoint::resetForces() {
     forceAccumulator.clear();
 }
 
-void SpringEndpoint::addExternalForce(Eigen::Vector3f (*newForce)(SpringEndpoint, SpringEndpoint, float)) {
+void SpringEndpoint::addExternalForce(std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType> newForce) {
     forceAccumulator.push_back(newForce);
 }
 
@@ -106,6 +106,7 @@ void SpringEndpoint::stepForward(float timeStep) {
 Eigen::Vector3f SpringEndpoint::evaluateGradient(Eigen::Vector3f newPosition, float timeStep, float time) {
     SpringEndpoint nextPos = *this;
     nextPos.assignNewPosition(newPosition);
+    nextPos.computeResultingForce(time);
     Eigen::Vector3f y = 2*position - oldPosition;
     Eigen::Vector3f clause2 = mass * (newPosition - y);
     Eigen::Vector3f clause1 = (timeStep * timeStep) * nextPos.getResultingForce();
@@ -113,14 +114,41 @@ Eigen::Vector3f SpringEndpoint::evaluateGradient(Eigen::Vector3f newPosition, fl
 }
 
 Eigen::Matrix3f SpringEndpoint::evaluateHessian(Eigen::Vector3f newPosition, float timeStep, float time) {
-    Eigen::Matrix3f m;
-    float x = newPosition[0];
-    float y = newPosition[1];
-    float koverr = -14000/200;
-    m << koverr, koverr, koverr,
-    koverr, koverr, koverr,
-    koverr, koverr, koverr;
+    Eigen::Matrix3f finalMatrix;
+    finalMatrix << 0, 0, 0,
+    0, 0, 0,
+    0, 0, 0;
     
-    Eigen::Matrix3f clause2 = timeStep*timeStep*m;
+    for (int i = 0; i < forceAccumulator.size(); i++) {
+        switch(forceAccumulator[i].second) {
+            case SPRING:
+                finalMatrix += evaluateHessian_Spring(newPosition);
+                break;
+            case GRAVITY:
+                finalMatrix += evaluateHessian_Gravity(newPosition);
+                break;
+            default:
+                break;
+        }
+    }
+    
+    Eigen::Matrix3f clause2 = timeStep*timeStep*finalMatrix;
     return mass - clause2;
+}
+
+Eigen::Matrix3f SpringEndpoint::evaluateHessian_Spring(Eigen::Vector3f newPosition) {
+    Eigen::Matrix3f m;
+    float koverr = -14000/200;
+    m << koverr, 0, 0,
+    0, koverr, 0,
+    0, 0, koverr;
+    return m;
+}
+
+Eigen::Matrix3f SpringEndpoint::evaluateHessian_Gravity(Eigen::Vector3f newPosition) {
+    Eigen::Matrix3f m;
+    m << 0, 0, 0,
+    0, 0, 0,
+    0, 0, 0;
+    return m;
 }

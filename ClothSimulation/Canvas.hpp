@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 #include <vector>
 #include "Spring.hpp"
 
@@ -28,10 +29,19 @@ public:
     int getWidth();
 
 private:
+    Eigen::Vector2f rasterizePoint(SpringEndpoint* particle);
+    Eigen::Matrix4f perspectiveMatrix(float, float, float, float);
+    Eigen::Matrix4f lookatMatrix(Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f);
+    Eigen::Vector2f scaleNDCToViewport(Eigen::Vector2f);
+    
     int width;
     int height;
     string title;
     GLFWwindow *window;
+    
+    float camX;
+    float camY;
+    float camZ;
 };
 
 

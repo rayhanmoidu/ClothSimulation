@@ -36,7 +36,9 @@ Eigen::Vector3f Simulation::applyNewtonsMethod(SpringEndpoint p) {
         curGuessPosition = nextGuessPosition;
         gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
         numIts++;
+        //cout <<"finding"<<endl;
     }
+    //cout <<"found!"<<endl;
     //cout << curGuessPosition << endl;
     //cout << numIts << endl;
     return curGuessPosition;
@@ -45,7 +47,6 @@ Eigen::Vector3f Simulation::applyNewtonsMethod(SpringEndpoint p) {
 void Simulation::optimizationImplicitEuler() {
     for (int i = 0; i < particles.size(); i++) {
         Eigen::Vector3f newParticlePosition = applyNewtonsMethod(*particles[i]);
-        //cout << newParticlePosition << endl;
         particles[i]->assignNewPosition(newParticlePosition);
     }
 }
@@ -67,8 +68,8 @@ void Simulation::computeNewParticleStates(StateComputationMode mode) {
     }
 }
 
-void Simulation::addExternalForce(Eigen::Vector3f (*newForce)(SpringEndpoint, SpringEndpoint, float)) {
-    externalForces.push_back(newForce);
+void Simulation::addExternalForce(Eigen::Vector3f (*newForce)(SpringEndpoint, SpringEndpoint, float), ForceType forceType) {
+    externalForces.push_back(std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>(newForce, forceType));
 }
 
 void Simulation::applyExternalForces() {

@@ -15,10 +15,15 @@
 
 using namespace std;
 
+enum ForceType {
+    SPRING = 0,
+    GRAVITY,
+};
+
 class SpringEndpoint {
 public:
     SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float);
-    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float, vector<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float)>, float, vector<SpringEndpoint*> neighbours);
+    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float, vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>>, float, vector<SpringEndpoint*> neighbours);
     SpringEndpoint();
     
     // adjusting positions
@@ -27,12 +32,14 @@ public:
     
     // forces
     void resetForces();
-    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float));
+    void addExternalForce(std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>);
     void computeResultingForce(float);
     
     // evaluation helpers
     Eigen::Vector3f evaluateGradient(Eigen::Vector3f, float, float);
     Eigen::Matrix3f evaluateHessian(Eigen::Vector3f, float, float);
+    Eigen::Matrix3f evaluateHessian_Spring(Eigen::Vector3f);
+    Eigen::Matrix3f evaluateHessian_Gravity(Eigen::Vector3f);
     
     // getters
     float getX();
@@ -54,7 +61,7 @@ private:
     Eigen::Matrix3f mass;
     Eigen::Vector3f velocity;
     
-    vector<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float)> forceAccumulator;
+    vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>> forceAccumulator;
     Eigen::Vector3f resultingForce;
     
     vector<SpringEndpoint*> neighbourEndpoints;
