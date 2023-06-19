@@ -59,7 +59,6 @@ Eigen::VectorXf Simulation::applyNewtonsMethod_Test() {
     for (int i = 0; i < 3*n; i++) {
         curGuessPosition[i] = 0;
     }
-    cout << curGuessPosition << endl;
     evaluateGradient(curGuessPosition);
     while (gradient.squaredNorm() > __FLT_EPSILON__) {
         //cout <<"hello..."<<endl;

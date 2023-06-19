@@ -22,8 +22,7 @@ enum ForceType {
 
 class SpringEndpoint {
 public:
-    SpringEndpoint(int, Eigen::Vector3f, Eigen::Vector3f, float);
-//    SpringEndpoint(Eigen::Vector3f, Eigen::Vector3f, float, vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>>, float, vector<SpringEndpoint*> neighbours);
+    SpringEndpoint(int, Eigen::Vector3f, float);
     SpringEndpoint();
     
     // adjusting positions

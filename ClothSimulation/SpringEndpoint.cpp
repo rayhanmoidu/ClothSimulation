@@ -16,9 +16,9 @@ SpringEndpoint::SpringEndpoint() {
     id = -1;
 }
 
-SpringEndpoint::SpringEndpoint(int id_, Eigen::Vector3f curPos, Eigen::Vector3f oldPos, float m) {
+SpringEndpoint::SpringEndpoint(int id_, Eigen::Vector3f curPos, float m) {
     position = curPos;
-    oldPosition = oldPos;
+    oldPosition = curPos;
     mass = Eigen::Matrix3f::Identity() * m;
     velocity = Eigen::Vector3f(0, 0, 0);
     id = id_;
@@ -57,7 +57,6 @@ float SpringEndpoint::getZ() {
 
 void SpringEndpoint::assignNewPosition(Eigen::Vector3f newPosition) {
     oldPosition = position;
-    cout << newPosition << endl;
     position = newPosition;
 }
 
