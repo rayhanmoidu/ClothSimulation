@@ -57,6 +57,7 @@ float SpringEndpoint::getZ() {
 
 void SpringEndpoint::assignNewPosition(Eigen::Vector3f newPosition) {
     oldPosition = position;
+    cout << newPosition << endl;
     position = newPosition;
 }
 

@@ -20,31 +20,28 @@ Eigen::Vector3f getSpringForce(SpringEndpoint p1, SpringEndpoint p2, float times
     float displacementX = p1.getX() - p2.getX();
     float displacementY = p1.getY() - p2.getY();
     float displacementZ = p1.getZ() - p2.getZ();
-    
-    float displacementXZ = sqrt(displacementX*displacementX + displacementZ*displacementZ);
-    float displacement = sqrt(displacementXZ*displacementXZ + displacementY*displacementY);
-    
+
+    float displacementXY = sqrt(displacementX*displacementX + displacementY*displacementY);
+    float displacement = sqrt(displacementXY*displacementXY + displacementZ*displacementZ);
+
     float force = k * (abs(displacement)/r - 1);
-    
-    float theta = atan(abs(displacementZ) / abs(displacementX));
-    float phi = atan(abs(displacementY) / abs(displacementXZ));
-    
+
+    float theta = atan(abs(displacementY) / abs(displacementX));
+    float phi = atan(abs(displacementZ) / abs(displacementXY));
+
     float forceX = force * cos(theta);
-    float forceY = force * sin(phi);
-    float forceZ = force * sin(theta);
-    
+    float forceY = force * sin(theta);
+    float forceZ = force * sin(phi);
+
     float dirX = (-displacementX/abs(displacementX));
     float dirY = (-displacementY/abs(displacementY));
     float dirZ = (-displacementZ/abs(displacementZ));
-    
-//    float fx = displacementX == 0 ? 0 : forceX * dirX;
-//    float fy = displacementY == 0 ? 0 : forceY * dirY;
-//    float fz = displacementZ == 0 ? 0 : forceZ * dirZ;
+
     float fx = displacementX == 0 ? 0 : forceX * dirX;
     float fy = displacementY == 0 ? 0 : forceY * dirY;
     float fz = displacementZ == 0 ? 0 : forceZ * dirZ;
-    
-    return Eigen::Vector3f(fx, fy, 0);
+
+    return Eigen::Vector3f(fx, fy, fz);
 
 //    float displacementX = p1.getX() - p2.getX();
 //    float displacementY = p1.getY() - p2.getY();
@@ -96,9 +93,9 @@ int main(int argc, const char * argv[]) {
  
     // SPRING ENDPOINTS
     std::vector<SpringEndpoint*> springEndpoints;
-    SpringEndpoint* springEndpoint1 = new SpringEndpoint(0, Eigen::Vector3f(400, 500, 0), Eigen::Vector3f(400, 500, 0), 5);
-    SpringEndpoint* springEndpoint2 = new SpringEndpoint(1, Eigen::Vector3f(600, 500, 0), Eigen::Vector3f(600, 500, 0), 5);
-    SpringEndpoint* springEndpoint3 = new SpringEndpoint(2, Eigen::Vector3f(200, 500, 0), Eigen::Vector3f(200, 500, 0), 5);
+    SpringEndpoint* springEndpoint1 = new SpringEndpoint(0, Eigen::Vector3f(400, 500, 10), Eigen::Vector3f(400, 500, 10), 5);
+    SpringEndpoint* springEndpoint2 = new SpringEndpoint(1, Eigen::Vector3f(600, 500, 11), Eigen::Vector3f(600, 500, 11), 5);
+    SpringEndpoint* springEndpoint3 = new SpringEndpoint(2, Eigen::Vector3f(200, 500, 12), Eigen::Vector3f(200, 500, 12), 5);
     springEndpoint3->addNeighbourEndpoint(springEndpoint1);
     springEndpoint3->addNeighbourEndpoint(springEndpoint2);
     springEndpoint1->addNeighbourEndpoint(springEndpoint2);
@@ -106,7 +103,7 @@ int main(int argc, const char * argv[]) {
     springEndpoint2->addNeighbourEndpoint(springEndpoint1);
     springEndpoint2->addNeighbourEndpoint(springEndpoint3);
     
-    SpringEndpoint* springEndpoint4 = new SpringEndpoint(3, Eigen::Vector3f(500, 1000, 0), Eigen::Vector3f(500, 1000, 0), 5);
+    SpringEndpoint* springEndpoint4 = new SpringEndpoint(3, Eigen::Vector3f(500, 1000, 13), Eigen::Vector3f(500, 1000, 13), 5);
     springEndpoint1->addNeighbourEndpoint(springEndpoint4);
     springEndpoint2->addNeighbourEndpoint(springEndpoint4);
     springEndpoint3->addNeighbourEndpoint(springEndpoint4);
@@ -124,7 +121,7 @@ int main(int argc, const char * argv[]) {
     //springEndpoints.push_back(springEndpoint2);
 
     
-    float timeStep = 0.005;
+    float timeStep = 0.05;
     
     Simulation simulation1(timeStep, springEndpoints, canvas, OPTIMIZATION_IMPLICIT_EULER);
     //Simulation simulation2(timeStep, springEndpoints2, canvas, TIMESTEP);
