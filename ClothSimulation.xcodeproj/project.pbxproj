@@ -18,6 +18,7 @@
 		A39EB9242A1C56EA00F4C1E6 /* libglfw.3.3.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = A39EB9222A1C56E900F4C1E6 /* libglfw.3.3.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A39EB92A2A1D68BD00F4C1E6 /* Vec3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB9282A1D68BD00F4C1E6 /* Vec3.cpp */; };
 		A39EB92D2A1D890200F4C1E6 /* Spring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB92B2A1D890200F4C1E6 /* Spring.cpp */; };
+		A3A608F02A4A53BD00685B86 /* Examples.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A3A608EE2A4A53BD00685B86 /* Examples.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -60,6 +61,8 @@
 		A39EB9292A1D68BD00F4C1E6 /* Vec3.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Vec3.hpp; sourceTree = "<group>"; };
 		A39EB92B2A1D890200F4C1E6 /* Spring.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Spring.cpp; sourceTree = "<group>"; };
 		A39EB92C2A1D890200F4C1E6 /* Spring.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Spring.hpp; sourceTree = "<group>"; };
+		A3A608EE2A4A53BD00685B86 /* Examples.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Examples.cpp; sourceTree = "<group>"; };
+		A3A608EF2A4A53BD00685B86 /* Examples.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Examples.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +110,8 @@
 				A39EB9292A1D68BD00F4C1E6 /* Vec3.hpp */,
 				A39EB92B2A1D890200F4C1E6 /* Spring.cpp */,
 				A39EB92C2A1D890200F4C1E6 /* Spring.hpp */,
+				A3A608EE2A4A53BD00685B86 /* Examples.cpp */,
+				A3A608EF2A4A53BD00685B86 /* Examples.hpp */,
 			);
 			path = ClothSimulation;
 			sourceTree = "<group>";
@@ -185,6 +190,7 @@
 				A39EB92A2A1D68BD00F4C1E6 /* Vec3.cpp in Sources */,
 				A39EB91A2A1C559B00F4C1E6 /* Canvas.cpp in Sources */,
 				A312E4D52A37B21400BB887F /* SpringEndpoint.cpp in Sources */,
+				A3A608F02A4A53BD00685B86 /* Examples.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

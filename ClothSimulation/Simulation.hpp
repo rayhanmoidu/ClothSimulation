@@ -14,16 +14,17 @@
 #include <vector>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/LU>
+#include "Examples.hpp"
 
 enum StateComputationMode {
     TIMESTEP = 0,
     OPTIMIZATION_IMPLICIT_EULER,
-    OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE,
+//    OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE,
 };
 
 class Simulation {
 public:
-    Simulation(float, vector<SpringEndpoint*>, std::vector<Spring>, vector<int>, Canvas, StateComputationMode);
+    Simulation(ClothRepresentation, float, Canvas, StateComputationMode);
     void update();
     void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType);
     
@@ -35,20 +36,20 @@ private:
     
     bool isParticleFixed(SpringEndpoint*);
     
+    void computeNeighbourRelationships();
+    
     // particle state computation methods
     void optimizationImplicitEuler();
-    void optimizationImplicitEuler_ByParticle();
     void timeStepping();
     
-    Eigen::MatrixXf evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::Vector3f p2);
     void evaluateHessian(Eigen::VectorXf);
+    Eigen::MatrixXf evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::Vector3f p2);
     void evaluateGradient(Eigen::VectorXf);
     void evaluateMassMatrix();
     Eigen::VectorXf getCurPosition();
     Eigen::VectorXf getPrevPosition();
     
-    Eigen::Vector3f applyNewtonsMethod(SpringEndpoint);
-    Eigen::VectorXf applyNewtonsMethod_Test();
+    Eigen::VectorXf applyNewtonsMethod();
     
     vector<SpringEndpoint*> particles;
     std::vector<Spring> springs;

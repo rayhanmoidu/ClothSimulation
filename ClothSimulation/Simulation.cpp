@@ -7,22 +7,37 @@
 
 #include "Simulation.hpp"
 
-Simulation::Simulation(float newTimeStep, vector<SpringEndpoint*> newParticles, std::vector<Spring> newSprings, vector<int> ids, Canvas newCanvas, StateComputationMode curMode) {
+Simulation::Simulation(ClothRepresentation cloth, float newTimeStep, Canvas newCanvas, StateComputationMode curMode) {
     timeStep = newTimeStep;
     time = 0;
-    particles = newParticles;
+    particles = cloth.endpoints;
     canvas = newCanvas;
     mode = curMode;
     
-    springs = newSprings;
+    springs = cloth.springs;
+    
+    computeNeighbourRelationships();
     
     n = particles.size();
     hessian = Eigen::MatrixXf(3*n, 3*n);
     gradient = Eigen::VectorXf(3*n);
     
-    fixedIds = ids;
+    fixedIds = cloth.fixedIds;
     
     evaluateMassMatrix();
+}
+
+void Simulation::computeNeighbourRelationships() {
+    for (int i = 0; i < particles.size(); i++) {
+        for (int j = 0; j < springs.size(); j++) {
+            vector<SpringEndpoint*> endpoints = springs[j].getEndpoints();
+            if (endpoints[0]==particles[i]) {
+                particles[i]->addNeighbourEndpoint(endpoints[1]);
+            } else if (endpoints[1]==particles[i]) {
+                particles[i]->addNeighbourEndpoint(endpoints[0]);
+            }
+        }
+    }
 }
 
 bool Simulation::isParticleFixed(SpringEndpoint* p) {
@@ -35,7 +50,9 @@ bool Simulation::isParticleFixed(SpringEndpoint* p) {
 void Simulation::update() {
     canvas.drawParticles(particles);
     
-    applyExternalForces();
+    if (mode==TIMESTEP) {
+        applyExternalForces();
+    }
     
     computeNewParticleStates(mode);
     
@@ -66,7 +83,7 @@ void Simulation::evaluateMassMatrix() {
     massMatrix = newMassMatrix;
 }
 
-Eigen::VectorXf Simulation::applyNewtonsMethod_Test() {
+Eigen::VectorXf Simulation::applyNewtonsMethod() {
     Eigen::VectorXf curGuessPosition(3*n);
     for (int i = 0; i < 3*n; i++) {
         curGuessPosition[i] = 0;
@@ -78,25 +95,6 @@ Eigen::VectorXf Simulation::applyNewtonsMethod_Test() {
         Eigen::VectorXf nextGuessPosition = curGuessPosition - hessian.inverse()*gradient;
         curGuessPosition = nextGuessPosition;
         evaluateGradient(curGuessPosition);
-        //cout <<"finding"<<endl;
-    }
-    //cout <<"found!"<<endl;
-    //cout << curGuessPosition << endl;
-    //cout << numIts << endl;
-    return curGuessPosition;
-}
-
-Eigen::Vector3f Simulation::applyNewtonsMethod(SpringEndpoint p) {
-    Eigen::Vector3f curGuessPosition = Eigen::Vector3f(1, 1, 1);
-    Eigen::Vector3f gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
-    int numIts = 1;
-    while (gradient.squaredNorm() > __FLT_EPSILON__) {
-        //cout <<"hello..."<<endl;
-        Eigen::Matrix3f hessian = p.evaluateHessian(curGuessPosition, timeStep, time);
-        Eigen::Vector3f nextGuessPosition = curGuessPosition - hessian.inverse()*gradient;
-        curGuessPosition = nextGuessPosition;
-        gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
-        numIts++;
         //cout <<"finding"<<endl;
     }
     //cout <<"found!"<<endl;
@@ -135,8 +133,6 @@ Eigen::VectorXf Simulation::getPrevPosition() {
     return prevPosition;
 }
 
-
-
 void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
     Eigen::VectorXf newGradient(3*n);
     for (int i = 0; i < 3*n; i++) {
@@ -170,6 +166,8 @@ void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
         Eigen::Vector3f externalForce(0, 0, 0);
 
         for (int j = 0; j < externalForces.size(); j++) {
+            // todo why do I need 2 here?
+            externalForce += particles[i]->getMass()*Eigen::Vector3f(0, -900.81, 0);
             externalForce += particles[i]->getMass()*Eigen::Vector3f(0, -900.81, 0);
         }
 
@@ -245,15 +243,16 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
         newHessian(p2_id*3+2, p1_id*3) = hessianPortion(5, 0);
         newHessian(p2_id*3+2, p1_id*3+1) = hessianPortion(5, 1);
         newHessian(p2_id*3+2, p1_id*3+2) = hessianPortion(5, 2);
-
     }
+    
+    // if any external forces are imparting hessian values, add them here
     
     Eigen::MatrixXf clause2 = timeStep*timeStep*newHessian;
     hessian = massMatrix - clause2;
 }
 
 void Simulation::optimizationImplicitEuler() {
-    Eigen::VectorXf newParticleState = applyNewtonsMethod_Test();
+    Eigen::VectorXf newParticleState = applyNewtonsMethod();
     for (int i = 0; i < particles.size(); i++) {
         Eigen::Vector3f newParticlePosition;
         int particleID = particles[i]->getID();
@@ -264,12 +263,12 @@ void Simulation::optimizationImplicitEuler() {
     }
 }
 
-void Simulation::optimizationImplicitEuler_ByParticle() {
-    for (int i = 0; i < particles.size(); i++) {
-        Eigen::Vector3f newParticlePosition = applyNewtonsMethod(*particles[i]);
-        particles[i]->assignNewPosition(newParticlePosition);
-    }
-}
+//void Simulation::optimizationImplicitEuler_ByParticle() {
+//    for (int i = 0; i < particles.size(); i++) {
+//        Eigen::Vector3f newParticlePosition = applyNewtonsMethod(*particles[i]);
+//        particles[i]->assignNewPosition(newParticlePosition);
+//    }
+//}
 
 void Simulation::timeStepping() {
     for (int i = 0; i < particles.size(); i++) {
@@ -285,9 +284,9 @@ void Simulation::computeNewParticleStates(StateComputationMode mode) {
         case OPTIMIZATION_IMPLICIT_EULER:
             optimizationImplicitEuler();
             break;
-        case OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE:
-            optimizationImplicitEuler_ByParticle();
-            break;
+//        case OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE:
+//            optimizationImplicitEuler_ByParticle();
+//            break;
     }
 }
 
