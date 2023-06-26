@@ -40,6 +40,7 @@ private:
     void optimizationImplicitEuler_ByParticle();
     void timeStepping();
     
+    Eigen::MatrixXf evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::Vector3f p2);
     void evaluateHessian(Eigen::VectorXf);
     void evaluateGradient(Eigen::VectorXf);
     void evaluateMassMatrix();

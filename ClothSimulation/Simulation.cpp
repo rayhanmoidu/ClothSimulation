@@ -189,6 +189,24 @@ void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
     gradient = clause2 - clause1;
 }
 
+Eigen::MatrixXf Simulation::evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::Vector3f p2) {
+    Eigen::MatrixXf hessian(6, 6);
+    float koverr = -14000/200;
+//    hessian << koverr, 0, 0, 0, 0, 0,
+//    0, koverr, 0, 0, 0, 0,
+//    0, 0, koverr, 0, 0, 0,
+//    0, 0, 0, koverr, 0, 0,
+//    0, 0, 0, 0, koverr, 0,
+//    0, 0, 0, 0, 0, koverr;
+    hessian << 0, 0, 0, koverr, 0, 0,
+    0, 0, 0, 0, koverr, 0,
+    0, 0, 0, 0, 0, koverr,
+    koverr, 0, 0, 0, 0, 0,
+    0, koverr, 0, 0, 0, 0,
+    0, 0, koverr, 0, 0, 0;
+    return hessian;
+}
+
 void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
     // hmm... might want to just do the diagnoals
     Eigen::MatrixXf newHessian(3*n, 3*n);
@@ -197,44 +215,37 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
             newHessian(i, j) = 0;
         }
     }
-    for (int i = 0; i < particles.size(); i++) {
-        int rowId = particles[i]->getID();
-        Eigen::Vector3f curGuessPositionPortion = Eigen::Vector3f(0, 0, 0);
-        curGuessPositionPortion[0] = curGuessPosition[rowId*3];
-        curGuessPositionPortion[1] = curGuessPosition[rowId*3 + 1];
-        curGuessPositionPortion[2] = curGuessPosition[rowId*3 + 2];
-        
-        // working
-//        Eigen::Matrix3f curHessianPortion = particles[i]->evaluateHessian(curGuessPositionPortion, timeStep, time);
-//        newHessian(rowId*3, rowId*3) = curHessianPortion(0, 0);
-//        newHessian(rowId*3, rowId*3+1) = curHessianPortion(0, 1);
-//        newHessian(rowId*3, rowId*3+2) = curHessianPortion(0, 2);
-//        newHessian(rowId*3+1, rowId*3) = curHessianPortion(1, 0);
-//        newHessian(rowId*3+1, rowId*3+1) = curHessianPortion(1, 1);
-//        newHessian(rowId*3+1, rowId*3+2) = curHessianPortion(1, 2);
-//        newHessian(rowId*3+2, rowId*3) = curHessianPortion(2, 0);
-//        newHessian(rowId*3+2, rowId*3+1) = curHessianPortion(2, 1);
-//        newHessian(rowId*3+2, rowId*3+2) = curHessianPortion(2, 2);
-        
-        // wORKING BUT NOT FOR FIXED ENDPOINTS
-        vector<std::pair<int, Eigen::Matrix3f>> listOfHessians = particles[i]->evaluateHessian_Test(curGuessPositionPortion, timeStep, time);
+    for (int i = 0; i < springs.size(); i++) {
+        vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
 
-        for (int j = 0; j < listOfHessians.size(); j++) {
-            int colId = listOfHessians[j].first;
-            Eigen::Matrix3f curHessianPortion = listOfHessians[j].second;
-            
-            if (!isParticleFixed(particles[i])) {
-                newHessian(rowId*3, colId*3) = curHessianPortion(0, 0);
-                newHessian(rowId*3, colId*3+1) = curHessianPortion(0, 1);
-                newHessian(rowId*3, colId*3+2) = curHessianPortion(0, 2);
-                newHessian(rowId*3+1, colId*3) = curHessianPortion(1, 0);
-                newHessian(rowId*3+1, colId*3+1) = curHessianPortion(1, 1);
-                newHessian(rowId*3+1, colId*3+2) = curHessianPortion(1, 2);
-                newHessian(rowId*3+2, colId*3) = curHessianPortion(2, 0);
-                newHessian(rowId*3+2, colId*3+1) = curHessianPortion(2, 1);
-                newHessian(rowId*3+2, colId*3+2) = curHessianPortion(2, 2);
-            }
-        }
+        int p1_id = endpoints[0]->getID();
+        int p2_id = endpoints[1]->getID();
+
+        Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
+        Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
+
+        Eigen::MatrixXf hessianPortion = evaluateHessian_Portion(p1_guessPosPortion, p2_guessPosPortion);
+
+        newHessian(p1_id*3, p2_id*3) = hessianPortion(0, 3);
+        newHessian(p1_id*3, p2_id*3+1) = hessianPortion(0, 4);
+        newHessian(p1_id*3, p2_id*3+2) = hessianPortion(0, 5);
+        newHessian(p1_id*3+1, p2_id*3) = hessianPortion(1, 3);
+        newHessian(p1_id*3+1, p2_id*3+1) = hessianPortion(1, 4);
+        newHessian(p1_id*3+1, p2_id*3+2) = hessianPortion(1, 5);
+        newHessian(p1_id*3+2, p2_id*3) = hessianPortion(2, 3);
+        newHessian(p1_id*3+2, p2_id*3+1) = hessianPortion(2, 4);
+        newHessian(p1_id*3+2, p2_id*3+2) = hessianPortion(2, 5);
+
+        newHessian(p2_id*3, p1_id*3) = hessianPortion(3, 0);
+        newHessian(p2_id*3, p1_id*3+1) = hessianPortion(3, 1);
+        newHessian(p2_id*3, p1_id*3+2) = hessianPortion(3, 2);
+        newHessian(p2_id*3+1, p1_id*3) = hessianPortion(4, 0);
+        newHessian(p2_id*3+1, p1_id*3+1) = hessianPortion(4, 1);
+        newHessian(p2_id*3+1, p1_id*3+2) = hessianPortion(4, 2);
+        newHessian(p2_id*3+2, p1_id*3) = hessianPortion(5, 0);
+        newHessian(p2_id*3+2, p1_id*3+1) = hessianPortion(5, 1);
+        newHessian(p2_id*3+2, p1_id*3+2) = hessianPortion(5, 2);
+
     }
     
     Eigen::MatrixXf clause2 = timeStep*timeStep*newHessian;
