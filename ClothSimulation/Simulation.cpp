@@ -161,38 +161,28 @@ void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
     for (int i = 0; i < 3*n; i++) {
         newGradient[i] = 0;
     }
-
-    // Spring Forces
-    for (int i = 0; i < springs.size(); i++) {
-        vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
-        
-        int p1_id = endpoints[0]->getID();
-        int p2_id = endpoints[1]->getID();
-        
-        Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
-        Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
-        
-        Eigen::Vector3f forceOnP1 = calculateSpringForce(p1_guessPosPortion, p2_guessPosPortion, springs[i].getRestLength(), springs[i].getSpringConstant());
-        Eigen::Vector3f forceOnP2 = calculateSpringForce(p2_guessPosPortion, p1_guessPosPortion, springs[i].getRestLength(), springs[i].getSpringConstant());
-        
-        for (int c = 0; c < 3; c++) {
-            newGradient[p1_id*3 + c] += forceOnP1[c];
-            newGradient[p2_id*3 + c] += forceOnP2[c];
-        }
-    }
-    
-    // External Forces
     for (int i = 0; i < particles.size(); i++) {
-        int p_id = particles[i]->getID();
-        Eigen::Vector3f externalForce(0, 0, 0);
         
-        for (int j = 0; j < externalForces.size(); j++) {
-            externalForce += externalForces[j].first(*particles[i]);
-        }
         
-        for (int c = 0; c < 3; c++) {
-            newGradient[p_id*3 + c] += externalForce[c];
+        
+        int rowId = particles[i]->getID();
+        Eigen::Vector3f curGuessPositionPortion = Eigen::Vector3f(0, 0, 0);
+        curGuessPositionPortion[0] = curGuessPosition[rowId*3];
+        curGuessPositionPortion[1] = curGuessPosition[rowId*3 + 1];
+        curGuessPositionPortion[2] = curGuessPosition[rowId*3 + 2];
+        
+        vector<SpringEndpoint*> neighbours = particles[i]->getNeighbourEndpoints();
+        Eigen::Vector3f accumForce(0, 0, 0);
+        for(int j = 0; j < neighbours.size(); j++) {
+            accumForce += calculateSpringForce(curGuessPositionPortion, neighbours[j]->getPosition(), 200, 14000);
         }
+        accumForce += particles[i]->getMass()*Eigen::Vector3f(0, -900.81, 0);
+        
+        
+        Eigen::Vector3f gradientPortion = accumForce;
+        newGradient[rowId*3] = gradientPortion[0];
+        newGradient[rowId*3 + 1] = gradientPortion[1];
+        newGradient[rowId*3 + 2] = gradientPortion[2];
     }
     
     Eigen::VectorXf curPos = getCurPosition();
@@ -203,6 +193,94 @@ void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
     Eigen::VectorXf clause1 = (timeStep * timeStep) * newGradient;
     gradient = clause2 - clause1;
 }
+
+
+//void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
+//    Eigen::VectorXf newGradient(3*n);
+//    for (int i = 0; i < 3*n; i++) {
+//        newGradient[i] = 0;
+//    }
+//
+//    // Spring Forces
+//    for (int i = 0; i < springs.size(); i++) {
+//        vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
+//
+//        int p1_id = endpoints[0]->getID();
+//        int p2_id = endpoints[1]->getID();
+//
+//        Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
+//        Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
+//
+//        Eigen::Vector3f forceOnP1 = calculateSpringForce(p1_guessPosPortion, p2_guessPosPortion, springs[i].getRestLength(), springs[i].getSpringConstant());
+//        Eigen::Vector3f forceOnP2 = calculateSpringForce(p2_guessPosPortion, p1_guessPosPortion, springs[i].getRestLength(), springs[i].getSpringConstant());
+//
+//        for (int c = 0; c < 3; c++) {
+//            newGradient[p1_id*3 + c] += forceOnP1[c];
+//            newGradient[p2_id*3 + c] += forceOnP2[c];
+//        }
+//    }
+//
+//    // External Forces
+//    for (int i = 0; i < particles.size(); i++) {
+//        int p_id = particles[i]->getID();
+//        Eigen::Vector3f externalForce(0, 0, 0);
+//
+//        for (int j = 0; j < externalForces.size(); j++) {
+//            externalForce += externalForces[j].first(*particles[i]);
+//        }
+//
+//        for (int c = 0; c < 3; c++) {
+//            newGradient[p_id*3 + c] += externalForce[c];
+//        }
+//    }
+//
+//    Eigen::VectorXf curPos = getCurPosition();
+//    Eigen::VectorXf prevPos = getPrevPosition();
+//
+//    Eigen::VectorXf y = 2*curPos - prevPos;
+//    Eigen::VectorXf clause2 = massMatrix * (curGuessPosition - y);
+//    Eigen::VectorXf clause1 = (timeStep * timeStep) * newGradient;
+//    gradient = clause2 - clause1;
+//}
+
+void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
+    // hmm... might want to just do the diagnoals
+    Eigen::MatrixXf newHessian(3*n, 3*n);
+    for (int i = 0; i < 3*n; i++) {
+        for (int j = 0; j < 3*n; j++) {
+            newHessian(i, j) = 0;
+        }
+    }
+    for (int i = 0; i < particles.size(); i++) {
+        int rowId = particles[i]->getID();
+        Eigen::Vector3f curGuessPositionPortion = Eigen::Vector3f(0, 0, 0);
+        curGuessPositionPortion[0] = curGuessPosition[rowId*3];
+        curGuessPositionPortion[1] = curGuessPosition[rowId*3 + 1];
+        curGuessPositionPortion[2] = curGuessPosition[rowId*3 + 2];
+        
+        // working
+        Eigen::Matrix3f curHessianPortion;
+        float koverr = -14000/200;
+        curHessianPortion << koverr, 0, 0,
+        0, koverr, 0,
+        0, 0, koverr;
+        
+        newHessian(rowId*3, rowId*3) = curHessianPortion(0, 0);
+        newHessian(rowId*3, rowId*3+1) = curHessianPortion(0, 1);
+        newHessian(rowId*3, rowId*3+2) = curHessianPortion(0, 2);
+        newHessian(rowId*3+1, rowId*3) = curHessianPortion(1, 0);
+        newHessian(rowId*3+1, rowId*3+1) = curHessianPortion(1, 1);
+        newHessian(rowId*3+1, rowId*3+2) = curHessianPortion(1, 2);
+        newHessian(rowId*3+2, rowId*3) = curHessianPortion(2, 0);
+        newHessian(rowId*3+2, rowId*3+1) = curHessianPortion(2, 1);
+        newHessian(rowId*3+2, rowId*3+2) = curHessianPortion(2, 2);
+        
+    }
+    
+    Eigen::MatrixXf clause2 = timeStep*timeStep*newHessian;
+    hessian = massMatrix - clause2;
+}
+
 
 Eigen::MatrixXf Simulation::evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::Vector3f p2) {
     Eigen::MatrixXf hessian(6, 6);
@@ -222,53 +300,53 @@ Eigen::MatrixXf Simulation::evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::V
     return hessian;
 }
 
-void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
-    // hmm... might want to just do the diagnoals
-    Eigen::MatrixXf newHessian(3*n, 3*n);
-    for (int i = 0; i < 3*n; i++) {
-        for (int j = 0; j < 3*n; j++) {
-            newHessian(i, j) = 0;
-        }
-    }
-
-    for (int i = 0; i < springs.size(); i++) {
-        vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
-        
-        int p1_id = endpoints[0]->getID();
-        int p2_id = endpoints[1]->getID();
-        
-        Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
-        Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
-        
-        Eigen::MatrixXf hessianPortion = evaluateHessian_Portion(p1_guessPosPortion, p2_guessPosPortion);
-        
-        newHessian(p1_id*3, p2_id*3) = hessianPortion(0, 3);
-        newHessian(p1_id*3, p2_id*3+1) = hessianPortion(0, 4);
-        newHessian(p1_id*3, p2_id*3+2) = hessianPortion(0, 5);
-        newHessian(p1_id*3+1, p2_id*3) = hessianPortion(1, 3);
-        newHessian(p1_id*3+1, p2_id*3+1) = hessianPortion(1, 4);
-        newHessian(p1_id*3+1, p2_id*3+2) = hessianPortion(1, 5);
-        newHessian(p1_id*3+2, p2_id*3) = hessianPortion(2, 3);
-        newHessian(p1_id*3+2, p2_id*3+1) = hessianPortion(2, 4);
-        newHessian(p1_id*3+2, p2_id*3+2) = hessianPortion(2, 5);
-        
-        newHessian(p2_id*3, p1_id*3) = hessianPortion(3, 0);
-        newHessian(p2_id*3, p1_id*3+1) = hessianPortion(3, 1);
-        newHessian(p2_id*3, p1_id*3+2) = hessianPortion(3, 2);
-        newHessian(p2_id*3+1, p1_id*3) = hessianPortion(4, 0);
-        newHessian(p2_id*3+1, p1_id*3+1) = hessianPortion(4, 1);
-        newHessian(p2_id*3+1, p1_id*3+2) = hessianPortion(4, 2);
-        newHessian(p2_id*3+2, p1_id*3) = hessianPortion(5, 0);
-        newHessian(p2_id*3+2, p1_id*3+1) = hessianPortion(5, 1);
-        newHessian(p2_id*3+2, p1_id*3+2) = hessianPortion(5, 2);
-        
-    }
-    
-    // if any external forces impart hessians, need to have those here as well!
-    
-    Eigen::MatrixXf clause2 = timeStep*timeStep*newHessian;
-    hessian = massMatrix - clause2;
-}
+//void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
+//    // hmm... might want to just do the diagnoals
+//    Eigen::MatrixXf newHessian(3*n, 3*n);
+//    for (int i = 0; i < 3*n; i++) {
+//        for (int j = 0; j < 3*n; j++) {
+//            newHessian(i, j) = 0;
+//        }
+//    }
+//
+//    for (int i = 0; i < springs.size(); i++) {
+//        vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
+//
+//        int p1_id = endpoints[0]->getID();
+//        int p2_id = endpoints[1]->getID();
+//
+//        Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
+//        Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
+//
+//        Eigen::MatrixXf hessianPortion = evaluateHessian_Portion(p1_guessPosPortion, p2_guessPosPortion);
+//
+//        newHessian(p1_id*3, p2_id*3) = hessianPortion(0, 3);
+//        newHessian(p1_id*3, p2_id*3+1) = hessianPortion(0, 4);
+//        newHessian(p1_id*3, p2_id*3+2) = hessianPortion(0, 5);
+//        newHessian(p1_id*3+1, p2_id*3) = hessianPortion(1, 3);
+//        newHessian(p1_id*3+1, p2_id*3+1) = hessianPortion(1, 4);
+//        newHessian(p1_id*3+1, p2_id*3+2) = hessianPortion(1, 5);
+//        newHessian(p1_id*3+2, p2_id*3) = hessianPortion(2, 3);
+//        newHessian(p1_id*3+2, p2_id*3+1) = hessianPortion(2, 4);
+//        newHessian(p1_id*3+2, p2_id*3+2) = hessianPortion(2, 5);
+//
+//        newHessian(p2_id*3, p1_id*3) = hessianPortion(3, 0);
+//        newHessian(p2_id*3, p1_id*3+1) = hessianPortion(3, 1);
+//        newHessian(p2_id*3, p1_id*3+2) = hessianPortion(3, 2);
+//        newHessian(p2_id*3+1, p1_id*3) = hessianPortion(4, 0);
+//        newHessian(p2_id*3+1, p1_id*3+1) = hessianPortion(4, 1);
+//        newHessian(p2_id*3+1, p1_id*3+2) = hessianPortion(4, 2);
+//        newHessian(p2_id*3+2, p1_id*3) = hessianPortion(5, 0);
+//        newHessian(p2_id*3+2, p1_id*3+1) = hessianPortion(5, 1);
+//        newHessian(p2_id*3+2, p1_id*3+2) = hessianPortion(5, 2);
+//
+//    }
+//
+//    // if any external forces impart hessians, need to have those here as well!
+//
+//    Eigen::MatrixXf clause2 = timeStep*timeStep*newHessian;
+//    hessian = massMatrix - clause2;
+//}
 
 void Simulation::optimizationImplicitEuler() {
     Eigen::VectorXf newParticleState = applyNewtonsMethod_Test();

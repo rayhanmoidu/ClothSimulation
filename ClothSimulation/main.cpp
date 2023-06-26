@@ -45,7 +45,7 @@ const Eigen::Vector3f gravitationalConstant = Eigen::Vector3f(0, -900.81, 0);
 //}
 
 Eigen::Vector3f getGravitationalForce(SpringEndpoint p1) {
-    return p1.getMass()*gravitationalConstant;
+    return p1.getMass()*Eigen::Vector3f(0, -900.81, 0);
 }
 
 int main(int argc, const char * argv[]) {
@@ -77,6 +77,21 @@ int main(int argc, const char * argv[]) {
     SpringEndpoint* springEndpoint3 = new SpringEndpoint(2, Eigen::Vector3f(200, 500, 0), 5);
     
     SpringEndpoint* springEndpoint4 = new SpringEndpoint(3, Eigen::Vector3f(500, 1000, 13), 5);
+    
+    // add neighbours here
+    
+    springEndpoint1->addNeighbourEndpoint(springEndpoint2);
+    springEndpoint2->addNeighbourEndpoint(springEndpoint1);
+    
+    springEndpoint1->addNeighbourEndpoint(springEndpoint3);
+    springEndpoint3->addNeighbourEndpoint(springEndpoint1);
+    
+    springEndpoint2->addNeighbourEndpoint(springEndpoint3);
+    springEndpoint3->addNeighbourEndpoint(springEndpoint2);
+    
+    springEndpoint1->addNeighbourEndpoint(springEndpoint4);
+    springEndpoint2->addNeighbourEndpoint(springEndpoint4);
+    springEndpoint3->addNeighbourEndpoint(springEndpoint4);
 
     
     Spring s1(springEndpoint1, springEndpoint2, 200, 14000, 0);
@@ -99,7 +114,7 @@ int main(int argc, const char * argv[]) {
     springEndpoints.push_back(springEndpoint1);
     springEndpoints.push_back(springEndpoint2);
     springEndpoints.push_back(springEndpoint3);
-    springEndpoints.push_back(springEndpoint4);
+//    springEndpoints.push_back(springEndpoint4);
     
 //    SpringEndpoint* springEndpoint1 = new SpringEndpoint(Eigen::Vector3f(400, 200, 0), Eigen::Vector3f(401, 200, 0), 5);
 //    SpringEndpoint* springEndpoint2 = new SpringEndpoint(Eigen::Vector3f(500, 500, 0), Eigen::Vector3f(500, 500, 0), 5);
@@ -110,7 +125,7 @@ int main(int argc, const char * argv[]) {
     //springEndpoints.push_back(springEndpoint2);
 
     cout <<"hello there3"<<endl;
-    float timeStep = 0.005;
+    float timeStep = 0.0005;
     
     Simulation simulation1(timeStep, springs, springEndpoints, canvas, OPTIMIZATION_IMPLICIT_EULER);
     //Simulation simulation2(timeStep, springEndpoints2, canvas, TIMESTEP);
