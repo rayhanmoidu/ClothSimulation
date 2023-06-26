@@ -23,29 +23,35 @@ enum StateComputationMode {
 
 class Simulation {
 public:
-    Simulation(float, vector<SpringEndpoint*>, Canvas, StateComputationMode);
+    Simulation(float, vector<Spring>, vector<SpringEndpoint*>, Canvas, StateComputationMode);
     void update();
-    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType);
+    void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint), ForceType);
 private:
     void computeNewParticleStates(StateComputationMode);
-    void applyExternalForces();
+    void applyForces();
+    Eigen::Vector3f calculateSpringForce(Eigen::Vector3f p1, Eigen::Vector3f p2, float r, float k);
+    
+    void getParticlesFromSprings();
     
     // particle state computation methods
     void optimizationImplicitEuler();
-    void optimizationImplicitEuler_ByParticle();
+//    void optimizationImplicitEuler_ByParticle();
     void timeStepping();
     
     void evaluateHessian(Eigen::VectorXf);
+    Eigen::MatrixXf evaluateHessian_Portion(Eigen::Vector3f, Eigen::Vector3f);
     void evaluateGradient(Eigen::VectorXf);
     void evaluateMassMatrix();
     Eigen::VectorXf getCurPosition();
     Eigen::VectorXf getPrevPosition();
     
-    Eigen::Vector3f applyNewtonsMethod(SpringEndpoint);
+//    Eigen::Vector3f applyNewtonsMethod(SpringEndpoint);
     Eigen::VectorXf applyNewtonsMethod_Test();
     
+    vector<Spring> springs;
     vector<SpringEndpoint*> particles;
-    vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>> externalForces;
+    
+    vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint), ForceType>> externalForces;
     float time;
     float timeStep;
     Canvas canvas;

@@ -14,18 +14,18 @@
 
 class Spring {
 public:
-    Spring(SpringEndpoint, SpringEndpoint, float, float, float);
-    void applyInternalSpringForces();
-    void applyAdditionalForce(Eigen::Vector3f (*)(SpringEndpoint));
-    void stepForward(float);
+    Spring(SpringEndpoint*, SpringEndpoint*, float, float, float);
     
-    vector<SpringEndpoint> getParticles();
+    vector<SpringEndpoint*> getEndpoints();
+    float getRestLength();
+    float getSpringConstant();
+
 private:
     float restLength;
     float springConstant;
     float dampingConstant;
-    SpringEndpoint p1;
-    SpringEndpoint p2;
+    SpringEndpoint* p1;
+    SpringEndpoint* p2;
 };
 
 #endif /* Spring_hpp */
