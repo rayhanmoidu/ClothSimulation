@@ -51,7 +51,7 @@ Eigen::Vector3f getGravitationalForce(SpringEndpoint p1, SpringEndpoint p2, floa
 int main(int argc, const char * argv[]) {
     glfwInit();
     char* windowTitle = "Cloth Simulation";
-    Canvas canvas(WIDTH, HEIGHT, windowTitle, THREE_D);
+    Canvas canvas(WIDTH, HEIGHT, windowTitle, TWO_D);
     GLFWwindow *window = canvas.getWindow();
     
     if (window == nullptr) {
@@ -88,8 +88,12 @@ int main(int argc, const char * argv[]) {
     springEndpoint3->addNeighbourEndpoint(springEndpoint4);
     
     springEndpoints.push_back(springEndpoint1);
+    springEndpoints.push_back(springEndpoint4);
     springEndpoints.push_back(springEndpoint2);
     springEndpoints.push_back(springEndpoint3);
+    
+    std::vector<int> fixedIds;
+    fixedIds.push_back(3);
     
 //    SpringEndpoint* springEndpoint1 = new SpringEndpoint(Eigen::Vector3f(400, 200, 0), Eigen::Vector3f(401, 200, 0), 5);
 //    SpringEndpoint* springEndpoint2 = new SpringEndpoint(Eigen::Vector3f(500, 500, 0), Eigen::Vector3f(500, 500, 0), 5);
@@ -100,9 +104,9 @@ int main(int argc, const char * argv[]) {
     //springEndpoints.push_back(springEndpoint2);
 
     
-    float timeStep = 0.005;
+    float timeStep = 0.05;
     
-    Simulation simulation1(timeStep, springEndpoints, canvas, OPTIMIZATION_IMPLICIT_EULER);
+    Simulation simulation1(timeStep, springEndpoints, fixedIds, canvas, OPTIMIZATION_IMPLICIT_EULER);
     //Simulation simulation2(timeStep, springEndpoints2, canvas, TIMESTEP);
     
     simulation1.addExternalForce(getSpringForce, SPRING);

@@ -23,12 +23,15 @@ enum StateComputationMode {
 
 class Simulation {
 public:
-    Simulation(float, vector<SpringEndpoint*>, Canvas, StateComputationMode);
+    Simulation(float, vector<SpringEndpoint*>, vector<int>, Canvas, StateComputationMode);
     void update();
     void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType);
+    
 private:
     void computeNewParticleStates(StateComputationMode);
     void applyExternalForces();
+    
+    bool isParticleFixed(SpringEndpoint*);
     
     // particle state computation methods
     void optimizationImplicitEuler();
@@ -50,6 +53,8 @@ private:
     float timeStep;
     Canvas canvas;
     StateComputationMode mode;
+    
+    vector<int> fixedIds;
     
     Eigen::VectorXf gradient;
     Eigen::MatrixXf hessian;
