@@ -15,9 +15,15 @@
 
 using namespace std;
 
+enum RenderingMode {
+    THREE_D = 0,
+    TWO_D,
+};
+
+
 class Canvas {
 public:
-    Canvas(int screenWidth, int screenHeight, char* windowTitle);
+    Canvas(int screenWidth, int screenHeight, char* windowTitle, RenderingMode);
     Canvas();
     void initCanvas();
     void drawParticles(vector<SpringEndpoint*> particles);
@@ -34,14 +40,21 @@ private:
     Eigen::Matrix4f lookatMatrix(Eigen::Vector3f, Eigen::Vector3f, Eigen::Vector3f);
     Eigen::Vector2f scaleNDCToViewport(Eigen::Vector2f);
     
+    static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    
     int width;
     int height;
     string title;
     GLFWwindow *window;
     
-    float camX;
-    float camY;
-    float camZ;
+    static float camX;
+    static float camY;
+    static float camZ;
+    static float lookAtX;
+    static float lookAtY;
+    static float lookAtZ;
+    
+    RenderingMode mode;
 };
 
 

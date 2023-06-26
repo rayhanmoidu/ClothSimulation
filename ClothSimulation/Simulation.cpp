@@ -158,21 +158,25 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
         }
     }
     for (int i = 0; i < particles.size(); i++) {
-        int id = particles[i]->getID();
+        int rowId = particles[i]->getID();
         Eigen::Vector3f curGuessPositionPortion = Eigen::Vector3f(0, 0, 0);
-        curGuessPositionPortion[0] = curGuessPosition[id*3];
-        curGuessPositionPortion[1] = curGuessPosition[id*3 + 1];
-        curGuessPositionPortion[2] = curGuessPosition[id*3 + 2];
+        curGuessPositionPortion[0] = curGuessPosition[rowId*3];
+        curGuessPositionPortion[1] = curGuessPosition[rowId*3 + 1];
+        curGuessPositionPortion[2] = curGuessPosition[rowId*3 + 2];
+        
+        // working
         Eigen::Matrix3f curHessianPortion = particles[i]->evaluateHessian(curGuessPositionPortion, timeStep, time);
-        newHessian(id*3, id*3) = curHessianPortion(0, 0);
-        newHessian(id*3, id*3+1) = curHessianPortion(0, 1);
-        newHessian(id*3, id*3+2) = curHessianPortion(0, 2);
-        newHessian(id*3+1, id*3) = curHessianPortion(1, 0);
-        newHessian(id*3+1, id*3+1) = curHessianPortion(1, 1);
-        newHessian(id*3+1, id*3+2) = curHessianPortion(1, 2);
-        newHessian(id*3+2, id*3) = curHessianPortion(2, 0);
-        newHessian(id*3+2, id*3+1) = curHessianPortion(2, 1);
-        newHessian(id*3+2, id*3+2) = curHessianPortion(2, 2);
+        newHessian(rowId*3, rowId*3) = curHessianPortion(0, 0);
+        newHessian(rowId*3, rowId*3+1) = curHessianPortion(0, 1);
+        newHessian(rowId*3, rowId*3+2) = curHessianPortion(0, 2);
+        newHessian(rowId*3+1, rowId*3) = curHessianPortion(1, 0);
+        newHessian(rowId*3+1, rowId*3+1) = curHessianPortion(1, 1);
+        newHessian(rowId*3+1, rowId*3+2) = curHessianPortion(1, 2);
+        newHessian(rowId*3+2, rowId*3) = curHessianPortion(2, 0);
+        newHessian(rowId*3+2, rowId*3+1) = curHessianPortion(2, 1);
+        newHessian(rowId*3+2, rowId*3+2) = curHessianPortion(2, 2);
+        
+        // wORKING BUT NOT FOR FIXED ENDPOINTS
 //        vector<std::pair<int, Eigen::Matrix3f>> listOfHessians = particles[i]->evaluateHessian_Test(curGuessPositionPortion, timeStep, time);
 //
 //        for (int j = 0; j < listOfHessians.size(); j++) {

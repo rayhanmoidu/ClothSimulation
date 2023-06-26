@@ -9,7 +9,7 @@
 #include "Canvas.hpp"
 #include "Simulation.hpp"
 
-const GLint WIDTH = 1000, HEIGHT = 500;
+const GLint WIDTH = 500, HEIGHT = 500;
 const Eigen::Vector3f gravitationalConstant = Eigen::Vector3f(0, -900.81, 0);
 
 Eigen::Vector3f getSpringForce(SpringEndpoint p1, SpringEndpoint p2, float timestep) {
@@ -51,9 +51,8 @@ Eigen::Vector3f getGravitationalForce(SpringEndpoint p1, SpringEndpoint p2, floa
 int main(int argc, const char * argv[]) {
     glfwInit();
     char* windowTitle = "Cloth Simulation";
-    Canvas canvas(WIDTH, HEIGHT, windowTitle);
+    Canvas canvas(WIDTH, HEIGHT, windowTitle, THREE_D);
     GLFWwindow *window = canvas.getWindow();
-    
     
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -73,9 +72,9 @@ int main(int argc, const char * argv[]) {
  
     // SPRING ENDPOINTS
     std::vector<SpringEndpoint*> springEndpoints;
-    SpringEndpoint* springEndpoint1 = new SpringEndpoint(0, Eigen::Vector3f(400, 500, 10), 5);
-    SpringEndpoint* springEndpoint2 = new SpringEndpoint(1, Eigen::Vector3f(600, 500, 11), 5);
-    SpringEndpoint* springEndpoint3 = new SpringEndpoint(2, Eigen::Vector3f(200, 500, 12), 5);
+    SpringEndpoint* springEndpoint1 = new SpringEndpoint(0, Eigen::Vector3f(400, 500, 0), 5);
+    SpringEndpoint* springEndpoint2 = new SpringEndpoint(1, Eigen::Vector3f(600, 500, 0), 5);
+    SpringEndpoint* springEndpoint3 = new SpringEndpoint(2, Eigen::Vector3f(200, 500, 0), 5);
     springEndpoint3->addNeighbourEndpoint(springEndpoint1);
     springEndpoint3->addNeighbourEndpoint(springEndpoint2);
     springEndpoint1->addNeighbourEndpoint(springEndpoint2);

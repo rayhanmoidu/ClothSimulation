@@ -7,16 +7,54 @@
 Canvas::Canvas() {
 }
 
-Canvas::Canvas(int screenWidth, int screenHeight, char* windowTitle) {
+void Canvas::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    float threshold = 0.5;
+    if (key == GLFW_KEY_LEFT)
+        camX -= threshold;
+    if (key == GLFW_KEY_RIGHT)
+        camX += threshold;
+    if (key == GLFW_KEY_UP)
+        camY -= threshold;
+    if (key == GLFW_KEY_DOWN)
+        camY += threshold;
+    if (key == GLFW_KEY_W)
+        camZ -= threshold;
+    if (key == GLFW_KEY_S)
+        camZ += threshold;
+    if (key == GLFW_KEY_P)
+        lookAtX -= threshold;
+    if (key == GLFW_KEY_L)
+        lookAtX += threshold;
+    if (key == GLFW_KEY_O)
+        lookAtY -= threshold;
+    if (key == GLFW_KEY_K)
+        lookAtY += threshold;
+    if (key == GLFW_KEY_I)
+        lookAtZ -= threshold;
+    if (key == GLFW_KEY_J)
+        lookAtZ += threshold;
+}
+
+float Canvas::camX = 0;
+float Canvas::camY = 0;
+float Canvas::camZ = 0;
+float Canvas::lookAtX = 0;
+float Canvas::lookAtY = 0;
+float Canvas::lookAtZ = 0;
+
+Canvas::Canvas(int screenWidth, int screenHeight, char* windowTitle, RenderingMode mode_) {
     title = windowTitle;
     window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, nullptr, nullptr);
+    mode = mode_;
+    glfwSetKeyCallback(window, key_callback);
     
         
     glfwGetFramebufferSize(window, &width, &height);
     
-    camY = 500;
-    camX = 500;
-    camZ = -100;
+    camY = -1;
+    camX = -1;
+    camZ = -1;
 }
 
 void Canvas::initCanvas() {
@@ -50,27 +88,16 @@ Eigen::Matrix4f Canvas::lookatMatrix(Eigen::Vector3f eye, Eigen::Vector3f center
     Eigen::Matrix4f m;
     
     Eigen::Vector3f f = (center - eye).normalized();
-    //cout<<"f "<<f<<endl;
     Eigen::Vector3f upp = up.normalized();
-    //cout<<"upp "<<upp<<endl;
     Eigen::Vector3f temp = f.cross(upp);
-    //cout<<"temp "<<temp<<endl;
     Eigen::Vector3f s = temp.normalized();
-    //cout<<"s "<<s<<endl;
     Eigen::Vector3f u = s.cross(f);
-    //cout<<"u "<<u<<endl;
-    
-//    Eigen::Vector3f temp = Eigen::Vector3f(0, 0, 0);
-//    Eigen::Vector3f s = temp.normalized();
-//    Eigen::Vector3f u = Eigen::Vector3f(0, 0, 0);
 
     m << s[0], s[1], s[2], 0,
     u[0], u[1], u[2], 0,
     -f[0], -f[1], -f[2], 0,
     0, 0, 0, 1;
     
-    //m = m.transpose();
-
     Eigen::Matrix4f t;
     t << 1, 0, 0, 0,
     0, 1, 0, 0,
@@ -79,7 +106,6 @@ Eigen::Matrix4f Canvas::lookatMatrix(Eigen::Vector3f eye, Eigen::Vector3f center
 
 
     m = m.transpose() * t;
-    //cout << m << endl;
     return m;
 }
 
@@ -91,92 +117,55 @@ Eigen::Vector2f Canvas::scaleNDCToViewport(Eigen::Vector2f xy_NDC) {
 }
 
 Eigen::Vector2f Canvas::rasterizePoint(SpringEndpoint* particle) {
-    Eigen::Matrix4f pm = perspectiveMatrix(40, width/height, 0.00001, 100);
-    Eigen::Matrix4f lm = lookatMatrix(Eigen::Vector3f(camX, camY, camZ), Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 1, 0));
-    //pm[0] = 1.81066;
-    //cout << pm << endl;
-    //cout << "hmm1 "<<pm<<endl;
-    //cout << "hmm2 "<<lm<<endl;
-    Eigen::Matrix4f plm = pm * lm;
-//    plm << 1.81066, 0, 0, 0,
-//    0, 2.41421, 0, 0,
-//    0, 0, -1, -1,
-//    0, 0, 1.4999, 1.5;
-
-    //cout << "hmm "<<plm<<endl;
+    Eigen::Matrix4f pm = perspectiveMatrix(45, width/height, 0.00001, 100);
+    Eigen::Matrix4f lm = lookatMatrix(Eigen::Vector3f(camX, camY, camZ), Eigen::Vector3f(lookAtX, lookAtY, lookAtZ), Eigen::Vector3f(0, 1, 0));
+    Eigen::Matrix4f plm = lm * pm;
     
     Eigen::Vector4f p = Eigen::Vector4f(particle->getX(), particle->getY(), particle->getZ(), 1);
-    //cout << p << endl;
     Eigen::Vector4f projectedP = plm * p;
-    //cout << "0 "<<projectedP[0]<<" "<<projectedP[1]<<" "<<projectedP[2]<<" "<<projectedP[3]<<endl;
     Eigen::Vector4f NDC_V1 = projectedP /projectedP[3];
-    //cout << "1 "<<NDC_V1[0]<<" "<<NDC_V1[1]<<endl;
     Eigen::Vector2f pixel = scaleNDCToViewport(Eigen::Vector2f(NDC_V1[0], NDC_V1[1]));
-    cout << "2 "<<pixel[0]<<" "<<pixel[1]<<endl;
-    //cout << "3 "<<particle->getX()<<" "<<particle->getY()<<" "<<particle->getZ()<<" "<<endl;
-    bool isViewable = pixel[0] <= width && pixel[0] >= 0 && pixel[1] <= height && pixel[1] >= 0;
 
-    if (isViewable) {
-        return pixel;
-    }
-    return Eigen::Vector2f(-1, -1);
+    return pixel;
 }
 
 void Canvas::drawParticles(vector<SpringEndpoint*> particles) {
     glColor3f(0.5f, 0.5f, 0.5f);
     int particleSize = 10;
     for (int i = 0; i < particles.size(); i++) {
-//        Eigen::Vector2f pixel = rasterizePoint(particles[i]);
-//        if (pixel[0]!=-1 && pixel[1]!=-1) {
-//            cout <<"hi"<<endl;
-//            glBegin(GL_QUADS);
-//            glVertex2f(pixel[0]-particleSize, pixel[1]-particleSize);
-//            glVertex2f(pixel[0]+particleSize, pixel[1]-particleSize);
-//            glVertex2f(pixel[0]+particleSize, pixel[1]+particleSize);
-//            glVertex2f(pixel[0]-particleSize, pixel[1]+particleSize);
-//            glEnd();
-//        }
-        
-        //***************************************************
-        
-//        int f = particles[i]->getZ() - camZ;
-//        const int newX = std::round(((particles[i]->getX()) * (f / particles[i]->getZ())));
-//        const int newY = std::round(((particles[i]->getY()) * (f / particles[i]->getZ())));
-//
-//        vector<SpringEndpoint*> particleNeighbours = particles[i]->getNeighbourEndpoints();
-//
-//        for (int j = 0; j < particleNeighbours.size(); j++) {
-//            int f = particleNeighbours[j]->getZ() - camZ;
-//            const int neighborNewX = std::round(((particleNeighbours[j]->getX()) * (f / particleNeighbours[j]->getZ())));
-//            const int neighborNewY = std::round(((particleNeighbours[j]->getY()) * (f / particleNeighbours[j]->getZ())));
-//
-//            glBegin(GL_LINES);
-//            glVertex2f(newX, newY);
-//            glVertex2f(neighborNewX, neighborNewY);
-//            glEnd();
-//        }
-//        if (newX >= 0 && newX <= width && newY >=0 && newY <= height) {
-//            glBegin(GL_QUADS);
-//            glVertex2f(newX-particleSize, newY-particleSize);
-//            glVertex2f(newX+particleSize, newY-particleSize);
-//            glVertex2f(newX+particleSize, newY+particleSize);
-//            glVertex2f(newX-particleSize, newY+particleSize);
-//            glEnd();
-//        }
-        
-        //ORIGINAL
-        glBegin(GL_QUADS);
-        glVertex2f(particles[i]->getX()-particleSize, particles[i]->getY()-particleSize);
-        glVertex2f(particles[i]->getX()+particleSize, particles[i]->getY()-particleSize);
-        glVertex2f(particles[i]->getX()+particleSize, particles[i]->getY()+particleSize);
-        glVertex2f(particles[i]->getX()-particleSize, particles[i]->getY()+particleSize);
-        glEnd();
-        vector<SpringEndpoint*> particleNeighbours = particles[i]->getNeighbourEndpoints();
-        for (int j = 0; j < particleNeighbours.size(); j++) {
-            glBegin(GL_LINES);
-            glVertex2f(particles[i]->getX(), particles[i]->getY());
-            glVertex2f(particleNeighbours[j]->getX(), particleNeighbours[j]->getY());
+        if (mode==THREE_D) {
+            Eigen::Vector2f pixel = rasterizePoint(particles[i]);
+            glBegin(GL_QUADS);
+            glVertex2f(pixel[0]-particleSize, pixel[1]-particleSize);
+            glVertex2f(pixel[0]+particleSize, pixel[1]-particleSize);
+            glVertex2f(pixel[0]+particleSize, pixel[1]+particleSize);
+            glVertex2f(pixel[0]-particleSize, pixel[1]+particleSize);
             glEnd();
+
+            vector<SpringEndpoint*> particleNeighbours = particles[i]->getNeighbourEndpoints();
+            for (int j = 0; j < particleNeighbours.size(); j++) {
+                Eigen::Vector2f neighbourPixel = rasterizePoint(particleNeighbours[j]);
+
+                glBegin(GL_LINES);
+                glVertex2f(pixel[0], pixel[1]);
+                glVertex2f(neighbourPixel[0], neighbourPixel[1]);
+                glEnd();
+            }
+        } else if (mode==TWO_D) {
+            //ORIGINAL
+            glBegin(GL_QUADS);
+            glVertex2f(particles[i]->getX()-particleSize, particles[i]->getY()-particleSize);
+            glVertex2f(particles[i]->getX()+particleSize, particles[i]->getY()-particleSize);
+            glVertex2f(particles[i]->getX()+particleSize, particles[i]->getY()+particleSize);
+            glVertex2f(particles[i]->getX()-particleSize, particles[i]->getY()+particleSize);
+            glEnd();
+            vector<SpringEndpoint*> particleNeighbours = particles[i]->getNeighbourEndpoints();
+            for (int j = 0; j < particleNeighbours.size(); j++) {
+                glBegin(GL_LINES);
+                glVertex2f(particles[i]->getX(), particles[i]->getY());
+                glVertex2f(particleNeighbours[j]->getX(), particleNeighbours[j]->getY());
+                glEnd();
+            }
         }
     }
 }
@@ -196,3 +185,9 @@ int Canvas::getHeight() {
 int Canvas::getWidth() {
     return width;
 }
+
+//
+//- lagrange multipliers
+//- h refinement and p refinement
+//- hessian construction, do it spring by spring and create a 6x6 hessian and put the corresponding 4 sections of the hessian into the right sections of the global hessian
+
