@@ -23,13 +23,15 @@ enum StateComputationMode {
 
 class Simulation {
 public:
-    Simulation(float, vector<SpringEndpoint*>, vector<int>, Canvas, StateComputationMode);
+    Simulation(float, vector<SpringEndpoint*>, std::vector<Spring>, vector<int>, Canvas, StateComputationMode);
     void update();
     void addExternalForce(Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType);
     
 private:
     void computeNewParticleStates(StateComputationMode);
     void applyExternalForces();
+    
+    Eigen::Vector3f calculateSpringForce(Eigen::Vector3f p1, Eigen::Vector3f p2, float r, float k);
     
     bool isParticleFixed(SpringEndpoint*);
     
@@ -48,6 +50,7 @@ private:
     Eigen::VectorXf applyNewtonsMethod_Test();
     
     vector<SpringEndpoint*> particles;
+    std::vector<Spring> springs;
     vector<std::pair<Eigen::Vector3f (*)(SpringEndpoint, SpringEndpoint, float), ForceType>> externalForces;
     float time;
     float timeStep;

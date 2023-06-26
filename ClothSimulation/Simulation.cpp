@@ -7,12 +7,15 @@
 
 #include "Simulation.hpp"
 
-Simulation::Simulation(float newTimeStep, vector<SpringEndpoint*> newParticles, vector<int> ids, Canvas newCanvas, StateComputationMode curMode) {
+Simulation::Simulation(float newTimeStep, vector<SpringEndpoint*> newParticles, std::vector<Spring> newSprings, vector<int> ids, Canvas newCanvas, StateComputationMode curMode) {
     timeStep = newTimeStep;
     time = 0;
     particles = newParticles;
     canvas = newCanvas;
     mode = curMode;
+    
+    springs = newSprings;
+    
     n = particles.size();
     hessian = Eigen::MatrixXf(3*n, 3*n);
     gradient = Eigen::VectorXf(3*n);
@@ -132,26 +135,48 @@ Eigen::VectorXf Simulation::getPrevPosition() {
     return prevPosition;
 }
 
+
+
 void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
     Eigen::VectorXf newGradient(3*n);
     for (int i = 0; i < 3*n; i++) {
         newGradient[i] = 0;
     }
+    
+    for (int i = 0; i < springs.size(); i++) {
+        vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
+
+        int p1_id = endpoints[0]->getID();
+        int p2_id = endpoints[1]->getID();
+
+        Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
+        Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
+
+        Eigen::Vector3f forceOnP1 = calculateSpringForce(p1_guessPosPortion, p2_guessPosPortion, springs[i].getRestLength(), springs[i].getSpringConstant());
+        Eigen::Vector3f forceOnP2 = calculateSpringForce(p2_guessPosPortion, p1_guessPosPortion, springs[i].getRestLength(), springs[i].getSpringConstant());
+
+        for (int c = 0; c < 3; c++) {
+            if (!isParticleFixed(endpoints[0])) {
+                newGradient[p1_id*3 + c] += forceOnP1[c];
+            }
+            if (!isParticleFixed(endpoints[1])) {
+                newGradient[p2_id*3 + c] += forceOnP2[c];
+            }
+        }
+    }
+    
     for (int i = 0; i < particles.size(); i++) {
-        int rowId = particles[i]->getID();
-        Eigen::Vector3f curGuessPositionPortion = Eigen::Vector3f(0, 0, 0);
-        curGuessPositionPortion[0] = curGuessPosition[rowId*3];
-        curGuessPositionPortion[1] = curGuessPosition[rowId*3 + 1];
-        curGuessPositionPortion[2] = curGuessPosition[rowId*3 + 2];
-        Eigen::Vector3f gradientPortion = particles[i]->evaluateGradient_Test(curGuessPositionPortion, timeStep, time);
-        if (isParticleFixed(particles[i])) {
-            newGradient[rowId*3] = 0;
-            newGradient[rowId*3 + 1] = 0;
-            newGradient[rowId*3 + 2] = 0;
-        } else {
-            newGradient[rowId*3] = gradientPortion[0];
-            newGradient[rowId*3 + 1] = gradientPortion[1];
-            newGradient[rowId*3 + 2] = gradientPortion[2];
+        int p_id = particles[i]->getID();
+        Eigen::Vector3f externalForce(0, 0, 0);
+
+        for (int j = 0; j < externalForces.size(); j++) {
+            externalForce += particles[i]->getMass()*Eigen::Vector3f(0, -900.81, 0);
+        }
+
+        for (int c = 0; c < 3; c++) {
+            if (!isParticleFixed(particles[i])) {
+                newGradient[p_id*3 + c] += externalForce[c];
+            }
         }
     }
     
@@ -267,4 +292,33 @@ void Simulation::applyExternalForces() {
         }
         particles[i]->computeResultingForce(time);
     }
+}
+
+Eigen::Vector3f Simulation::calculateSpringForce(Eigen::Vector3f p1, Eigen::Vector3f p2, float r, float k) {
+    
+    float displacementX = p1[0] - p2[0];
+    float displacementY = p1[1] - p2[1];
+    float displacementZ = p1[2] - p2[2];
+
+    float displacementXY = sqrt(displacementX*displacementX + displacementY*displacementY);
+    float displacement = sqrt(displacementXY*displacementXY + displacementZ*displacementZ);
+
+    float force = k * (abs(displacement)/r - 1);
+
+    float theta = atan(abs(displacementY) / abs(displacementX));
+    float phi = atan(abs(displacementZ) / abs(displacementXY));
+
+    float forceX = force * cos(theta);
+    float forceY = force * sin(theta);
+    float forceZ = force * sin(phi);
+
+    float dirX = (-displacementX/abs(displacementX));
+    float dirY = (-displacementY/abs(displacementY));
+    float dirZ = (-displacementZ/abs(displacementZ));
+
+    float fx = displacementX == 0 ? 0 : forceX * dirX;
+    float fy = displacementY == 0 ? 0 : forceY * dirY;
+    float fz = displacementZ == 0 ? 0 : forceZ * dirZ;
+
+    return Eigen::Vector3f(fx, fy, fz);
 }

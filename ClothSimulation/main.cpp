@@ -95,6 +95,24 @@ int main(int argc, const char * argv[]) {
     std::vector<int> fixedIds;
     fixedIds.push_back(3);
     
+    std::vector<Spring> springs;
+    
+    Spring s1(springEndpoint1, springEndpoint2, 200, 14000, 0);
+    Spring s2(springEndpoint1, springEndpoint3, 200, 14000, 0);
+    Spring s3(springEndpoint2, springEndpoint3, 200, 14000, 0);
+    
+    Spring s4(springEndpoint1, springEndpoint4, 200, 14000, 0);
+    Spring s5(springEndpoint2, springEndpoint4, 200, 14000, 0);
+    Spring s6(springEndpoint3, springEndpoint4, 200, 14000, 0);
+    
+    springs.push_back(s1);
+    springs.push_back(s2);
+    springs.push_back(s3);
+    springs.push_back(s4);
+    springs.push_back(s5);
+    springs.push_back(s6);
+        
+    
 //    SpringEndpoint* springEndpoint1 = new SpringEndpoint(Eigen::Vector3f(400, 200, 0), Eigen::Vector3f(401, 200, 0), 5);
 //    SpringEndpoint* springEndpoint2 = new SpringEndpoint(Eigen::Vector3f(500, 500, 0), Eigen::Vector3f(500, 500, 0), 5);
     
@@ -106,7 +124,7 @@ int main(int argc, const char * argv[]) {
     
     float timeStep = 0.05;
     
-    Simulation simulation1(timeStep, springEndpoints, fixedIds, canvas, OPTIMIZATION_IMPLICIT_EULER);
+    Simulation simulation1(timeStep, springEndpoints, springs, fixedIds, canvas, OPTIMIZATION_IMPLICIT_EULER);
     //Simulation simulation2(timeStep, springEndpoints2, canvas, TIMESTEP);
     
     simulation1.addExternalForce(getSpringForce, SPRING);
