@@ -62,8 +62,8 @@
             filePath = "ClothSimulation/Simulation.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "122"
-            endingLineNumber = "122"
+            startingLineNumber = "140"
+            endingLineNumber = "140"
             landmarkName = "Simulation::getPrevPosition()"
             landmarkType = "7">
          </BreakpointContent>

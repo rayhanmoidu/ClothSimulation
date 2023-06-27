@@ -50,12 +50,8 @@ bool Simulation::isParticleFixed(SpringEndpoint* p) {
 void Simulation::update() {
     canvas.drawParticles(particles);
     
-    if (mode==TIMESTEP) {
-        applyExternalForces();
-    }
-    
+    applyExternalForces();
     computeNewParticleStates(mode);
-    
     time += timeStep;
 }
 
@@ -89,12 +85,34 @@ Eigen::VectorXf Simulation::applyNewtonsMethod() {
         curGuessPosition[i] = 0;
     }
     evaluateGradient(curGuessPosition);
-    while (gradient.squaredNorm() > __FLT_EPSILON__) {
+    while (gradient.squaredNorm() > (__FLT_EPSILON__ * gradient.size())) {
         //cout <<"hello..."<<endl;
         evaluateHessian(curGuessPosition);
         Eigen::VectorXf nextGuessPosition = curGuessPosition - hessian.inverse()*gradient;
         curGuessPosition = nextGuessPosition;
         evaluateGradient(curGuessPosition);
+//        cout <<"finding"<<endl;
+//        cout << gradient << endl;
+//        cout << gradient.squaredNorm() << endl;
+//        cout << __FLT_EPSILON__ << endl;
+    }
+    //cout <<"found!"<<endl;
+    //cout << curGuessPosition << endl;
+    //cout << numIts << endl;
+    return curGuessPosition;
+}
+
+Eigen::Vector3f Simulation::applyNewtonsMethod_ByParticle(SpringEndpoint p) {
+    Eigen::Vector3f curGuessPosition = Eigen::Vector3f(1, 1, 1);
+    Eigen::Vector3f gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
+    int numIts = 1;
+    while (gradient.squaredNorm() > __FLT_EPSILON__) {
+        //cout <<"hello..."<<endl;
+        Eigen::Matrix3f hessian = p.evaluateHessian(curGuessPosition, timeStep, time);
+        Eigen::Vector3f nextGuessPosition = curGuessPosition - hessian.inverse()*gradient;
+        curGuessPosition = nextGuessPosition;
+        gradient = p.evaluateGradient(curGuessPosition, timeStep, time);
+        numIts++;
         //cout <<"finding"<<endl;
     }
     //cout <<"found!"<<endl;
@@ -167,8 +185,8 @@ void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
 
         for (int j = 0; j < externalForces.size(); j++) {
             // todo why do I need 2 here?
-            externalForce += particles[i]->getMass()*Eigen::Vector3f(0, -900.81, 0);
-            externalForce += particles[i]->getMass()*Eigen::Vector3f(0, -900.81, 0);
+            externalForce += externalForces[j].first(*particles[i], *particles[i], 0);
+//            externalForce += particles[i]->getMass()*Eigen::Vector3f(0, -90.81, 0);
         }
 
         for (int c = 0; c < 3; c++) {
@@ -224,25 +242,45 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
 
         Eigen::MatrixXf hessianPortion = evaluateHessian_Portion(p1_guessPosPortion, p2_guessPosPortion);
 
-        newHessian(p1_id*3, p2_id*3) = hessianPortion(0, 3);
-        newHessian(p1_id*3, p2_id*3+1) = hessianPortion(0, 4);
-        newHessian(p1_id*3, p2_id*3+2) = hessianPortion(0, 5);
-        newHessian(p1_id*3+1, p2_id*3) = hessianPortion(1, 3);
-        newHessian(p1_id*3+1, p2_id*3+1) = hessianPortion(1, 4);
-        newHessian(p1_id*3+1, p2_id*3+2) = hessianPortion(1, 5);
-        newHessian(p1_id*3+2, p2_id*3) = hessianPortion(2, 3);
-        newHessian(p1_id*3+2, p2_id*3+1) = hessianPortion(2, 4);
-        newHessian(p1_id*3+2, p2_id*3+2) = hessianPortion(2, 5);
+        newHessian(p1_id*3, p2_id*3) += hessianPortion(0, 3);
+        newHessian(p1_id*3, p2_id*3+1) += hessianPortion(0, 4);
+        newHessian(p1_id*3, p2_id*3+2) += hessianPortion(0, 5);
+        newHessian(p1_id*3+1, p2_id*3) += hessianPortion(1, 3);
+        newHessian(p1_id*3+1, p2_id*3+1) += hessianPortion(1, 4);
+        newHessian(p1_id*3+1, p2_id*3+2) += hessianPortion(1, 5);
+        newHessian(p1_id*3+2, p2_id*3) += hessianPortion(2, 3);
+        newHessian(p1_id*3+2, p2_id*3+1) += hessianPortion(2, 4);
+        newHessian(p1_id*3+2, p2_id*3+2) += hessianPortion(2, 5);
+        
+        newHessian(p1_id*3, p1_id*3) += hessianPortion(0, 0);
+        newHessian(p1_id*3, p1_id*3+1) += hessianPortion(0, 1);
+        newHessian(p1_id*3, p1_id*3+2) += hessianPortion(0, 2);
+        newHessian(p1_id*3+1, p1_id*3) += hessianPortion(1, 0);
+        newHessian(p1_id*3+1, p1_id*3+1) += hessianPortion(1, 1);
+        newHessian(p1_id*3+1, p1_id*3+2) += hessianPortion(1, 2);
+        newHessian(p1_id*3+2, p1_id*3) += hessianPortion(2, 0);
+        newHessian(p1_id*3+2, p1_id*3+1) += hessianPortion(2, 1);
+        newHessian(p1_id*3+2, p1_id*3+2) += hessianPortion(2, 2);
 
-        newHessian(p2_id*3, p1_id*3) = hessianPortion(3, 0);
-        newHessian(p2_id*3, p1_id*3+1) = hessianPortion(3, 1);
-        newHessian(p2_id*3, p1_id*3+2) = hessianPortion(3, 2);
-        newHessian(p2_id*3+1, p1_id*3) = hessianPortion(4, 0);
-        newHessian(p2_id*3+1, p1_id*3+1) = hessianPortion(4, 1);
-        newHessian(p2_id*3+1, p1_id*3+2) = hessianPortion(4, 2);
-        newHessian(p2_id*3+2, p1_id*3) = hessianPortion(5, 0);
-        newHessian(p2_id*3+2, p1_id*3+1) = hessianPortion(5, 1);
-        newHessian(p2_id*3+2, p1_id*3+2) = hessianPortion(5, 2);
+        newHessian(p2_id*3, p1_id*3) += hessianPortion(3, 0);
+        newHessian(p2_id*3, p1_id*3+1) += hessianPortion(3, 1);
+        newHessian(p2_id*3, p1_id*3+2) += hessianPortion(3, 2);
+        newHessian(p2_id*3+1, p1_id*3) += hessianPortion(4, 0);
+        newHessian(p2_id*3+1, p1_id*3+1) += hessianPortion(4, 1);
+        newHessian(p2_id*3+1, p1_id*3+2) += hessianPortion(4, 2);
+        newHessian(p2_id*3+2, p1_id*3) += hessianPortion(5, 0);
+        newHessian(p2_id*3+2, p1_id*3+1) += hessianPortion(5, 1);
+        newHessian(p2_id*3+2, p1_id*3+2) += hessianPortion(5, 2);
+        
+        newHessian(p2_id*3, p2_id*3) += hessianPortion(3, 3);
+        newHessian(p2_id*3, p2_id*3+1) += hessianPortion(3, 4);
+        newHessian(p2_id*3, p2_id*3+2) += hessianPortion(3, 5);
+        newHessian(p2_id*3+1, p2_id*3) += hessianPortion(4, 3);
+        newHessian(p2_id*3+1, p2_id*3+1) += hessianPortion(4, 4);
+        newHessian(p2_id*3+1, p2_id*3+2) += hessianPortion(4, 5);
+        newHessian(p2_id*3+2, p2_id*3) += hessianPortion(5, 3);
+        newHessian(p2_id*3+2, p2_id*3+1) += hessianPortion(5, 4);
+        newHessian(p2_id*3+2, p2_id*3+2) += hessianPortion(5, 5);
     }
     
     // if any external forces are imparting hessian values, add them here
@@ -252,7 +290,9 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
 }
 
 void Simulation::optimizationImplicitEuler() {
+    cout<<"applying newton"<<endl;
     Eigen::VectorXf newParticleState = applyNewtonsMethod();
+    cout<<"done!"<<endl;
     for (int i = 0; i < particles.size(); i++) {
         Eigen::Vector3f newParticlePosition;
         int particleID = particles[i]->getID();
@@ -263,16 +303,20 @@ void Simulation::optimizationImplicitEuler() {
     }
 }
 
-//void Simulation::optimizationImplicitEuler_ByParticle() {
-//    for (int i = 0; i < particles.size(); i++) {
-//        Eigen::Vector3f newParticlePosition = applyNewtonsMethod(*particles[i]);
-//        particles[i]->assignNewPosition(newParticlePosition);
-//    }
-//}
+void Simulation::optimizationImplicitEuler_ByParticle() {
+    for (int i = 0; i < particles.size(); i++) {
+        Eigen::Vector3f newParticlePosition = applyNewtonsMethod_ByParticle(*particles[i]);
+        if (!isParticleFixed(particles[i])) {
+            particles[i]->assignNewPosition(newParticlePosition);
+        }
+    }
+}
 
 void Simulation::timeStepping() {
     for (int i = 0; i < particles.size(); i++) {
-        particles[i]->stepForward(timeStep);
+        if (!isParticleFixed(particles[i])) {
+            particles[i]->stepForward(timeStep);
+        }
     }
 }
 
@@ -284,9 +328,9 @@ void Simulation::computeNewParticleStates(StateComputationMode mode) {
         case OPTIMIZATION_IMPLICIT_EULER:
             optimizationImplicitEuler();
             break;
-//        case OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE:
-//            optimizationImplicitEuler_ByParticle();
-//            break;
+        case OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE:
+            optimizationImplicitEuler_ByParticle();
+            break;
     }
 }
 

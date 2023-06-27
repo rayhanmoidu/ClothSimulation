@@ -19,7 +19,7 @@
 enum StateComputationMode {
     TIMESTEP = 0,
     OPTIMIZATION_IMPLICIT_EULER,
-//    OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE,
+    OPTIMIZATION_IMPLICIT_EULER_BY_PARTICLE,
 };
 
 class Simulation {
@@ -40,6 +40,7 @@ private:
     
     // particle state computation methods
     void optimizationImplicitEuler();
+    void optimizationImplicitEuler_ByParticle();
     void timeStepping();
     
     void evaluateHessian(Eigen::VectorXf);
@@ -50,6 +51,7 @@ private:
     Eigen::VectorXf getPrevPosition();
     
     Eigen::VectorXf applyNewtonsMethod();
+    Eigen::Vector3f applyNewtonsMethod_ByParticle(SpringEndpoint p);
     
     vector<SpringEndpoint*> particles;
     std::vector<Spring> springs;
