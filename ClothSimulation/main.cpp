@@ -11,7 +11,7 @@
 #include "Examples.hpp"
 
 const GLint WIDTH = 500, HEIGHT = 500;
-const Eigen::Vector3f gravitationalConstant = Eigen::Vector3f(0, -900.81, 0);
+const Eigen::Vector3f gravitationalConstant = Eigen::Vector3f(0, -90.81, 0);
 
 Eigen::Vector3f getSpringForce(SpringEndpoint p1, SpringEndpoint p2, float timestep) {
     // before
@@ -82,7 +82,7 @@ int main(int argc, const char * argv[]) {
     Simulation simulation1(pyramidExample, timeStep, canvas, OPTIMIZATION_IMPLICIT_EULER);
     
     simulation1.addExternalForce(getGravitationalForce, GRAVITY);
-    //simulation1.addExternalForce(getSpringForce, SPRING);
+    simulation1.addExternalForce(getSpringForce, SPRING);
     
     while (!glfwWindowShouldClose(window)) {
         canvas.initCanvas();

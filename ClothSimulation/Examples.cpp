@@ -26,11 +26,14 @@ ClothRepresentation Examples::getExample(ExampleType type) {
 }
 
 ClothRepresentation Examples::getExample_BasicCloth() {
+    int adder = 150;
+    int springKVal = 14000;
+    
     std::vector<std::vector<SpringEndpoint*>> springEndpoints;
     int id = 0;
-    for (int i = 50; i <= 950; i+= 300) {
+    for (int i = 50; i <= 950; i+=adder) {
         std::vector<SpringEndpoint*> newRow;
-        for (int j = 50; j <= 950; j+=300) {
+        for (int j = 50; j <= 950; j+=adder) {
             SpringEndpoint* springEndpoint = new SpringEndpoint(id++, Eigen::Vector3f(i, j, 0), 5);
             newRow.push_back(springEndpoint);
         }
@@ -39,9 +42,12 @@ ClothRepresentation Examples::getExample_BasicCloth() {
 
     //
     
+    int dim = 900 / adder;
     std::vector<int> fixedIds;
-    fixedIds.push_back(3);
-    fixedIds.push_back(15);
+
+    for (int i = dim; i < (dim+1)*(dim+1); i+= dim+1) {
+        fixedIds.push_back(i);
+    }
     
     //
     
@@ -51,7 +57,7 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     for (int i = 0; i < springEndpoints.size(); i++) {
         vector<SpringEndpoint*> curRow = springEndpoints[i];
         for (int j = 0; j < curRow.size() -1; j++) {
-            Spring s1(curRow[j], curRow[j+1], 100, 14000, 0);
+            Spring s1(curRow[j], curRow[j+1], 100, springKVal, 0);
             springs.push_back(s1);
         }
     }
@@ -59,7 +65,7 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     //vertical directions
     for (int i = 0; i < springEndpoints.size() - 1; i++) {
         for (int j = 0; j < springEndpoints[i].size(); j++) {
-            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j], 100, 14000, 0);
+            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j], 100, springKVal, 0);
             springs.push_back(s1);
 
         }
@@ -68,7 +74,7 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     // forward diagnoals
     for (int i = 0; i < springEndpoints.size() - 1; i++) {
         for (int j = 0; j < springEndpoints[i].size() - 1; j++) {
-            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j+1], 100, 14000, 0);
+            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j+1], 100, springKVal, 0);
             springs.push_back(s1);
 
         }
@@ -77,7 +83,7 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     // backward diagnoals
     for (int i = 0; i < springEndpoints.size() - 1; i++) {
         for (int j = 1; j < springEndpoints[i].size(); j++) {
-            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j-1], 100, 14000, 0);
+            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j-1], 100, springKVal, 0);
             springs.push_back(s1);
         }
     }

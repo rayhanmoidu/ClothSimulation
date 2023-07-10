@@ -6,6 +6,7 @@
 //
 
 #include "Simulation.hpp"
+#include <eigen3/Eigen/Sparse>
 
 Simulation::Simulation(ClothRepresentation cloth, float newTimeStep, Canvas newCanvas, StateComputationMode curMode) {
     timeStep = newTimeStep;
@@ -50,8 +51,11 @@ bool Simulation::isParticleFixed(SpringEndpoint* p) {
 void Simulation::update() {
     canvas.drawParticles(particles);
     
+    if (mode!=OPTIMIZATION_IMPLICIT_EULER) {
     applyExternalForces();
+    }
     computeNewParticleStates(mode);
+        
     time += timeStep;
 }
 
@@ -79,13 +83,25 @@ void Simulation::evaluateMassMatrix() {
     massMatrix = newMassMatrix;
 }
 
+bool isGradientSatisfied(Eigen::VectorXf grad) {
+    for (int i = 0; i < grad.size(); i++) {
+        if (grad[i]*grad[i] > __FLT_EPSILON__ *pow(grad.size(), 2)) return false;
+    }
+    return true;
+}
+
 Eigen::VectorXf Simulation::applyNewtonsMethod() {
     Eigen::VectorXf curGuessPosition(3*n);
     for (int i = 0; i < 3*n; i++) {
         curGuessPosition[i] = 0;
     }
+    
+    curGuessPosition = getPrevPosition();
     evaluateGradient(curGuessPosition);
-    while (gradient.squaredNorm() > (__FLT_EPSILON__ * gradient.size())) {
+//    while (!isGradientSatisfied(gradient)) {
+    while (gradient.squaredNorm() > (__FLT_EPSILON__ * pow(gradient.size(), 2))) {
+//    while (gradient.squaredNorm() > 0.5) {
+//        cout << gradient.squaredNorm()<<endl;
         //cout <<"hello..."<<endl;
         evaluateHessian(curGuessPosition);
         Eigen::VectorXf nextGuessPosition = curGuessPosition - hessian.inverse()*gradient;
@@ -214,13 +230,33 @@ Eigen::MatrixXf Simulation::evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::V
 //    0, 0, 0, koverr, 0, 0,
 //    0, 0, 0, 0, koverr, 0,
 //    0, 0, 0, 0, 0, koverr;
-    hessian << 0, 0, 0, koverr, 0, 0,
-    0, 0, 0, 0, koverr, 0,
-    0, 0, 0, 0, 0, koverr,
-    koverr, 0, 0, 0, 0, 0,
-    0, koverr, 0, 0, 0, 0,
-    0, 0, koverr, 0, 0, 0;
+//    hessian << 0, 0, 0, koverr, 0, 0,
+//    0, 0, 0, 0, koverr, 0,
+//    0, 0, 0, 0, 0, koverr,
+//    koverr, 0, 0, 0, 0, 0,
+//    0, koverr, 0, 0, 0, 0,
+//    0, 0, koverr, 0, 0, 0;
+    hessian << koverr, 0, 0, koverr, 0, 0,
+    0, koverr, 0, 0, koverr, 0,
+    0, 0, koverr, 0, 0, koverr,
+    koverr, 0, 0, koverr, 0, 0,
+    0, koverr, 0, 0, koverr, 0,
+    0, 0, koverr, 0, 0, koverr;
+//        hessian << 0, 0, 0, 0, 0, 0,
+//        0, 0, 0, 0, 0, 0,
+//        0, 0, 0, 0, 0, 0,
+//        0, 0, 0, 0, 0, 0,
+//        0, 0, 0, 0, 0, 0,
+//        0, 0, 0, 0, 0, 0;
     return hessian;
+}
+
+vector<Eigen::Triplet<float>> getHessianTriplets(Eigen::Vector3f p1, Eigen::Vector3f p2) {
+    float koverr = -14000/200;
+    vector<Eigen::Triplet<float>> retVal;
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3, p1_id*3, koverr));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p1_id*3+1, koverr));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+2, p1_id*3+2, koverr));
 }
 
 void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
@@ -231,6 +267,7 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
             newHessian(i, j) = 0;
         }
     }
+//    Eigen::SparseMatrix<float> newHessian(3*n, 3*n);
     for (int i = 0; i < springs.size(); i++) {
         vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
 
@@ -290,9 +327,9 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
 }
 
 void Simulation::optimizationImplicitEuler() {
-    cout<<"applying newton"<<endl;
+    //cout<<"applying newton"<<endl;
     Eigen::VectorXf newParticleState = applyNewtonsMethod();
-    cout<<"done!"<<endl;
+    //cout<<"done!"<<endl;
     for (int i = 0; i < particles.size(); i++) {
         Eigen::Vector3f newParticlePosition;
         int particleID = particles[i]->getID();
