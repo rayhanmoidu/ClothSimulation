@@ -11,7 +11,9 @@
 #include "Examples.hpp"
 
 const GLint WIDTH = 500, HEIGHT = 500;
-const Eigen::Vector3f gravitationalConstant = Eigen::Vector3f(0, -90.81, 0);
+const Eigen::Vector3f gravitationalConstant = Eigen::Vector3f(0, -9.81, 0);
+const Eigen::Vector3f windConstant = Eigen::Vector3f(0, 0, 0);
+
 
 Eigen::Vector3f getSpringForce(SpringEndpoint p1, SpringEndpoint p2, float timestep) {
     // before
@@ -23,7 +25,9 @@ Eigen::Vector3f getSpringForce(SpringEndpoint p1, SpringEndpoint p2, float times
     float displacementZ = p1.getZ() - p2.getZ();
 
     float displacementXY = sqrt(displacementX*displacementX + displacementY*displacementY);
-    float displacement = sqrt(displacementXY*displacementXY + displacementZ*displacementZ);
+//    float displacement = sqrt(displacementXY*displacementXY + displacementZ*displacementZ);
+    
+    float displacement = sqrt(displacementX*displacementX + displacementY*displacementY + displacementZ*displacementZ);
 
     float force = k * (abs(displacement)/r - 1);
 
@@ -47,6 +51,10 @@ Eigen::Vector3f getSpringForce(SpringEndpoint p1, SpringEndpoint p2, float times
 
 Eigen::Vector3f getGravitationalForce(SpringEndpoint p1, SpringEndpoint p2, float timestep) {
     return p1.getMass()*gravitationalConstant;
+}
+
+Eigen::Vector3f getWindForce(SpringEndpoint p1, SpringEndpoint p2, float timestep) {
+    return p1.getMass()*windConstant;
 }
 
 int main(int argc, const char * argv[]) {
@@ -82,7 +90,7 @@ int main(int argc, const char * argv[]) {
     Simulation simulation1(pyramidExample, timeStep, canvas, OPTIMIZATION_IMPLICIT_EULER);
     
     simulation1.addExternalForce(getGravitationalForce, GRAVITY);
-    simulation1.addExternalForce(getSpringForce, SPRING);
+    simulation1.addExternalForce(getWindForce, GRAVITY);
     
     while (!glfwWindowShouldClose(window)) {
         canvas.initCanvas();

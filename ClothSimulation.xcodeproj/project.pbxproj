@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A30960662A5D0B1C0034A9F4 /* Hessian.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A30960642A5D0B1C0034A9F4 /* Hessian.cpp */; };
 		A312E4D52A37B21400BB887F /* SpringEndpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A312E4D32A37B21400BB887F /* SpringEndpoint.cpp */; };
 		A32EE9EC2A2D8FDA005CA6B5 /* Simulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A32EE9EA2A2D8FDA005CA6B5 /* Simulation.cpp */; };
 		A39EB90F2A1C54AA00F4C1E6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A39EB90E2A1C54AA00F4C1E6 /* main.cpp */; };
@@ -46,6 +47,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A30960642A5D0B1C0034A9F4 /* Hessian.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hessian.cpp; sourceTree = "<group>"; };
+		A30960652A5D0B1C0034A9F4 /* Hessian.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Hessian.hpp; sourceTree = "<group>"; };
 		A312E4D32A37B21400BB887F /* SpringEndpoint.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SpringEndpoint.cpp; sourceTree = "<group>"; };
 		A312E4D42A37B21400BB887F /* SpringEndpoint.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SpringEndpoint.hpp; sourceTree = "<group>"; };
 		A32EE9EA2A2D8FDA005CA6B5 /* Simulation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Simulation.cpp; sourceTree = "<group>"; };
@@ -111,6 +114,8 @@
 				A39EB92B2A1D890200F4C1E6 /* Spring.cpp */,
 				A39EB92C2A1D890200F4C1E6 /* Spring.hpp */,
 				A3A608EE2A4A53BD00685B86 /* Examples.cpp */,
+				A30960642A5D0B1C0034A9F4 /* Hessian.cpp */,
+				A30960652A5D0B1C0034A9F4 /* Hessian.hpp */,
 				A3A608EF2A4A53BD00685B86 /* Examples.hpp */,
 			);
 			path = ClothSimulation;
@@ -191,6 +196,7 @@
 				A39EB91A2A1C559B00F4C1E6 /* Canvas.cpp in Sources */,
 				A312E4D52A37B21400BB887F /* SpringEndpoint.cpp in Sources */,
 				A3A608F02A4A53BD00685B86 /* Examples.cpp in Sources */,
+				A30960662A5D0B1C0034A9F4 /* Hessian.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

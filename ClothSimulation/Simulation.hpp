@@ -15,6 +15,7 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/LU>
 #include "Examples.hpp"
+#include <eigen3/Eigen/Sparse>
 
 enum StateComputationMode {
     TIMESTEP = 0,
@@ -44,9 +45,12 @@ private:
     void timeStepping();
     
     void evaluateHessian(Eigen::VectorXf);
+    Eigen::SparseMatrix<float> evaluateHessian_Sparse(Eigen::VectorXf);
+    Eigen::SparseMatrix<float> evaluateHessian_Sparse_Basic();
     Eigen::MatrixXf evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::Vector3f p2);
     void evaluateGradient(Eigen::VectorXf);
     void evaluateMassMatrix();
+    Eigen::SparseMatrix<float> evaluateMassMatrix_Sparse();
     Eigen::VectorXf getCurPosition();
     Eigen::VectorXf getPrevPosition();
     
@@ -66,6 +70,8 @@ private:
     Eigen::VectorXf gradient;
     Eigen::MatrixXf hessian;
     Eigen::MatrixXf massMatrix;
+    Eigen::SparseMatrix<float> massMatrix_Sparse;
+    Eigen::SparseMatrix<float> hessian_Sparse;
     int n;
 };
 

@@ -131,7 +131,7 @@ Eigen::Vector2f Canvas::rasterizePoint(SpringEndpoint* particle) {
 
 void Canvas::drawParticles(vector<SpringEndpoint*> particles) {
     glColor3f(0.5f, 0.5f, 0.5f);
-    int particleSize = 10;
+    int particleSize = 2;
     for (int i = 0; i < particles.size(); i++) {
         if (mode==THREE_D) {
             Eigen::Vector2f pixel = rasterizePoint(particles[i]);

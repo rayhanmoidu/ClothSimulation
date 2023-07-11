@@ -27,14 +27,17 @@ ClothRepresentation Examples::getExample(ExampleType type) {
 
 ClothRepresentation Examples::getExample_BasicCloth() {
     int adder = 150;
-    int springKVal = 14000;
+    int springKVal = 13000;
+    int mass = 50;
+    int restLength = 150;
     
     std::vector<std::vector<SpringEndpoint*>> springEndpoints;
     int id = 0;
     for (int i = 50; i <= 950; i+=adder) {
         std::vector<SpringEndpoint*> newRow;
         for (int j = 50; j <= 950; j+=adder) {
-            SpringEndpoint* springEndpoint = new SpringEndpoint(id++, Eigen::Vector3f(i, j, 0), 5);
+            float z = (rand() % 2);
+            SpringEndpoint* springEndpoint = new SpringEndpoint(id++, Eigen::Vector3f(i, j, z), mass);
             newRow.push_back(springEndpoint);
         }
         springEndpoints.push_back(newRow);
@@ -44,10 +47,29 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     
     int dim = 900 / adder;
     std::vector<int> fixedIds;
+    
+    
 
     for (int i = dim; i < (dim+1)*(dim+1); i+= dim+1) {
         fixedIds.push_back(i);
     }
+    
+    std::vector<int> newFixedIds;
+    
+    // centrally fixed
+    int numToTruncate = 0;
+    for (int i = numToTruncate; i < fixedIds.size() - numToTruncate; i++) {
+        newFixedIds.push_back(fixedIds[i]);
+    }
+    
+    //laterally fixed
+//    int numToSelect = 1;
+//    for (int i = 0; i < numToSelect; i++) {
+//        newFixedIds.push_back(fixedIds[i]);
+//    }
+//    for (int i = fixedIds.size()-1; i > fixedIds.size() - 1 - numToSelect; i--) {
+//        newFixedIds.push_back(fixedIds[i]);
+//    }
     
     //
     
@@ -57,7 +79,7 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     for (int i = 0; i < springEndpoints.size(); i++) {
         vector<SpringEndpoint*> curRow = springEndpoints[i];
         for (int j = 0; j < curRow.size() -1; j++) {
-            Spring s1(curRow[j], curRow[j+1], 100, springKVal, 0);
+            Spring s1(curRow[j], curRow[j+1], restLength, springKVal, 0);
             springs.push_back(s1);
         }
     }
@@ -65,7 +87,7 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     //vertical directions
     for (int i = 0; i < springEndpoints.size() - 1; i++) {
         for (int j = 0; j < springEndpoints[i].size(); j++) {
-            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j], 100, springKVal, 0);
+            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j], restLength, springKVal, 0);
             springs.push_back(s1);
 
         }
@@ -74,7 +96,7 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     // forward diagnoals
     for (int i = 0; i < springEndpoints.size() - 1; i++) {
         for (int j = 0; j < springEndpoints[i].size() - 1; j++) {
-            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j+1], 100, springKVal, 0);
+            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j+1], restLength, springKVal, 0);
             springs.push_back(s1);
 
         }
@@ -83,10 +105,29 @@ ClothRepresentation Examples::getExample_BasicCloth() {
     // backward diagnoals
     for (int i = 0; i < springEndpoints.size() - 1; i++) {
         for (int j = 1; j < springEndpoints[i].size(); j++) {
-            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j-1], 100, springKVal, 0);
+            Spring s1(springEndpoints[i][j], springEndpoints[i+1][j-1], restLength, springKVal, 0);
             springs.push_back(s1);
         }
     }
+    
+    // bend horizontal
+//    for (int i = 0; i < springEndpoints.size(); i++) {
+//        vector<SpringEndpoint*> curRow = springEndpoints[i];
+//        for (int j = 0; j < curRow.size() -2; j++) {
+//            Spring s1(curRow[j], curRow[j+2], restLength, springKVal, 0);
+//            springs.push_back(s1);
+//        }
+//    }
+    
+    // bend vertical
+//    for (int i = 0; i < springEndpoints.size() - 2; i++) {
+//        for (int j = 0; j < springEndpoints[i].size(); j++) {
+//            Spring s1(springEndpoints[i][j], springEndpoints[i+2][j], restLength, springKVal, 0);
+//            springs.push_back(s1);
+//
+//        }
+//    }
+    
     
     vector<SpringEndpoint*> finalEndpoints;
     for (int i = 0; i < springEndpoints.size() ; i++) {
@@ -95,7 +136,7 @@ ClothRepresentation Examples::getExample_BasicCloth() {
         }
     }
     
-    return ClothRepresentation(springs, finalEndpoints, fixedIds);
+    return ClothRepresentation(springs, finalEndpoints, newFixedIds);
 }
 
 

@@ -6,7 +6,7 @@
 //
 
 #include "Simulation.hpp"
-#include <eigen3/Eigen/Sparse>
+#include "Hessian.hpp"
 
 Simulation::Simulation(ClothRepresentation cloth, float newTimeStep, Canvas newCanvas, StateComputationMode curMode) {
     timeStep = newTimeStep;
@@ -24,8 +24,17 @@ Simulation::Simulation(ClothRepresentation cloth, float newTimeStep, Canvas newC
     gradient = Eigen::VectorXf(3*n);
     
     fixedIds = cloth.fixedIds;
-    
     evaluateMassMatrix();
+    massMatrix_Sparse = evaluateMassMatrix_Sparse();
+    
+    hessian_Sparse = evaluateHessian_Sparse_Basic();
+
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver;
+    solver.compute(hessian_Sparse);
+    Eigen::SparseMatrix<float> I(3*n,3*n);
+    I.setIdentity();
+    hessian_Sparse = solver.solve(I);
+
 }
 
 void Simulation::computeNeighbourRelationships() {
@@ -55,8 +64,25 @@ void Simulation::update() {
     applyExternalForces();
     }
     computeNewParticleStates(mode);
-        
+            
     time += timeStep;
+}
+
+Eigen::SparseMatrix<float> Simulation::evaluateMassMatrix_Sparse() {
+    Eigen::SparseMatrix<float> newSparse(3*n, 3*n);
+    
+    vector<Eigen::Triplet<float>> massTriplets;
+    
+    for (int i = 0; i < particles.size(); i++) {
+        int id = particles[i]->getID();
+        Eigen::Matrix3f massPortion = particles[i]->getMass();
+        
+        massTriplets.push_back(Eigen::Triplet<float>(id*3, id*3, massPortion(0, 0)));
+        massTriplets.push_back(Eigen::Triplet<float>(id*3+1, id*3+1, massPortion(1, 1)));
+        massTriplets.push_back(Eigen::Triplet<float>(id*3+2, id*3+2, massPortion(2, 2)));
+    }
+    newSparse.setFromTriplets(massTriplets.begin(), massTriplets.end());
+    return newSparse;
 }
 
 void Simulation::evaluateMassMatrix() {
@@ -66,6 +92,7 @@ void Simulation::evaluateMassMatrix() {
             newMassMatrix(i, j) = 0;
         }
     }
+            
     for (int i = 0; i < particles.size(); i++) {
         int id = particles[i]->getID();
         Eigen::Matrix3f massPortion = particles[i]->getMass();
@@ -98,23 +125,29 @@ Eigen::VectorXf Simulation::applyNewtonsMethod() {
     
     curGuessPosition = getPrevPosition();
     evaluateGradient(curGuessPosition);
-//    while (!isGradientSatisfied(gradient)) {
+    int numIts = 0;
     while (gradient.squaredNorm() > (__FLT_EPSILON__ * pow(gradient.size(), 2))) {
-//    while (gradient.squaredNorm() > 0.5) {
-//        cout << gradient.squaredNorm()<<endl;
-        //cout <<"hello..."<<endl;
-        evaluateHessian(curGuessPosition);
-        Eigen::VectorXf nextGuessPosition = curGuessPosition - hessian.inverse()*gradient;
+//        evaluateHessian(curGuessPosition);
+//        Eigen::VectorXf nextGuessPosition = curGuessPosition - hessian.inverse()*gradient;
+//        hessian_Sparse = evaluateHessian_Sparse(curGuessPosition);
+//        cout << hessian_Sparse.rows()<<" "<<hessian_Sparse.cols()<<endl;
+//        Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver;
+//        solver.compute(hessian_Sparse);
+//        Eigen::SparseMatrix<float> I(3*n,3*n);
+//        I.setIdentity();
+//        hessian_Sparse = solver.solve(I);
+        // need to invert
+        Eigen::VectorXf nextGuessPosition = curGuessPosition - hessian_Sparse*gradient;
         curGuessPosition = nextGuessPosition;
         evaluateGradient(curGuessPosition);
-//        cout <<"finding"<<endl;
-//        cout << gradient << endl;
-//        cout << gradient.squaredNorm() << endl;
-//        cout << __FLT_EPSILON__ << endl;
+        //cout << "stuck" << " "<<gradient.squaredNorm()<<endl;
+        if (numIts++ > 5) {
+            cout<<"OH NO"<<endl;
+            break;
+        }
     }
-    //cout <<"found!"<<endl;
-    //cout << curGuessPosition << endl;
-    //cout << numIts << endl;
+    //cout<<"unstuck"<<endl;
+
     return curGuessPosition;
 }
 
@@ -173,6 +206,7 @@ void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
         newGradient[i] = 0;
     }
     
+    // apply spring forces
     for (int i = 0; i < springs.size(); i++) {
         vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
 
@@ -181,7 +215,7 @@ void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
 
         Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
         Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
-
+        
         Eigen::Vector3f forceOnP1 = calculateSpringForce(p1_guessPosPortion, p2_guessPosPortion, springs[i].getRestLength(), springs[i].getSpringConstant());
         Eigen::Vector3f forceOnP2 = calculateSpringForce(p2_guessPosPortion, p1_guessPosPortion, springs[i].getRestLength(), springs[i].getSpringConstant());
 
@@ -195,6 +229,39 @@ void Simulation::evaluateGradient(Eigen::VectorXf curGuessPosition) {
         }
     }
     
+    // detect collisions
+//    for (int i = 0; i < particles.size(); i++) {
+//        for (int j = i+1; j < particles.size(); j++) {
+//
+//            int p1_id = particles[i]->getID();
+//            int p2_id = particles[j]->getID();
+//
+//            Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
+//            Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
+//            // should I be using position or
+//            Eigen::Vector3f diff = p1_guessPosPortion - p2_guessPosPortion;
+//            //Eigen::Vector3f diff = particles[i]->getPosition() - particles[j]->getPosition();
+//            
+//            //cout<<diff.squaredNorm()<<endl;
+//            // detected collision
+//            int factor = 100*__FLT_EPSILON__;
+//            if (abs(diff[0]) < factor && abs(diff[1]) < factor && abs(diff[2]) < factor) {
+//                cout<<"COLLISION!"<<endl;
+//                Eigen::Vector3f forceOnP1 = calculateSpringForce(p1_guessPosPortion, p2_guessPosPortion, 100, 14000);
+//                Eigen::Vector3f forceOnP2 = calculateSpringForce(p2_guessPosPortion, p1_guessPosPortion, 100, 14000);
+//                for (int c = 0; c < 3; c++) {
+//                    if (!isParticleFixed(particles[i])) {
+//                        newGradient[p1_id*3 + c] += forceOnP1[c];
+//                    }
+//                    if (!isParticleFixed(particles[j])) {
+//                        newGradient[p2_id*3 + c] += forceOnP2[c];
+//                    }
+//                }
+//            }
+//        }
+//    }
+    
+    // apply external forces
     for (int i = 0; i < particles.size(); i++) {
         int p_id = particles[i]->getID();
         Eigen::Vector3f externalForce(0, 0, 0);
@@ -251,12 +318,134 @@ Eigen::MatrixXf Simulation::evaluateHessian_Portion(Eigen::Vector3f p1, Eigen::V
     return hessian;
 }
 
-vector<Eigen::Triplet<float>> getHessianTriplets(Eigen::Vector3f p1, Eigen::Vector3f p2) {
-    float koverr = -14000/200;
+vector<Eigen::Triplet<float>> getHessianTriplets_Test(Spring s, Eigen::Vector3f p, Eigen::Vector3f q) {
+    Hessian hessianCalculator;
+    
+    int p1_id = s.getEndpoints()[0]->getID();
+    int p2_id = s.getEndpoints()[1]->getID();
+    
+    Eigen::VectorXf row1 = hessianCalculator.computeHessian_dfx(p, q, s.getRestLength(), s.getSpringConstant());
+    Eigen::VectorXf row2 = hessianCalculator.computeHessian_dfy(p, q, s.getRestLength(), s.getSpringConstant());
+    Eigen::VectorXf row3 = hessianCalculator.computeHessian_dfz(p, q, s.getRestLength(), s.getSpringConstant());
+    Eigen::VectorXf row4 = hessianCalculator.computeHessian_dfx(q, p, s.getRestLength(), s.getSpringConstant());
+    Eigen::VectorXf row5 = hessianCalculator.computeHessian_dfy(q, p, s.getRestLength(), s.getSpringConstant());
+    Eigen::VectorXf row6 = hessianCalculator.computeHessian_dfz(q, p, s.getRestLength(), s.getSpringConstant());
+    
+    vector<Eigen::Triplet<float>> retVal;
+    
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3, p1_id*3, row1[0]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3, p1_id*3+1, row1[1]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3, p1_id*3+2, row1[2]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p2_id*3, row2[0]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p2_id*3+1, row2[1]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p2_id*3+2, row2[2]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p1_id*3, row3[0]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p1_id*3+1, row3[1]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p1_id*3+2, row3[2]));
+    
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3, p2_id*3, row4[4]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3, p2_id*3+1, row4[5]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3, p2_id*3+2, row4[6]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+1, p2_id*3, row5[4]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+1, p2_id*3+1, row5[5]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+1, p2_id*3+2, row5[6]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p2_id*3, row6[4]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p2_id*3+1, row6[5]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p2_id*3+2, row6[6]));
+    
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3, p2_id*3, row1[4]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3, p2_id*3+1, row1[5]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3, p2_id*3+2, row1[6]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p2_id*3, row2[4]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p2_id*3+1, row2[5]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p2_id*3+2, row2[6]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+2, p2_id*3, row3[4]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+2, p2_id*3+1, row3[5]));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+2, p2_id*3+2, row3[6]));
+    
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3, p1_id*3, row4[0]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3, p1_id*3+1, row4[1]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3, p1_id*3+2, row4[2]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+1, p2_id*3, row5[0]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+1, p2_id*3+1, row5[1]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+1, p2_id*3+2, row5[2]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p1_id*3, row6[0]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p1_id*3+1, row6[1]));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p1_id*3+2, row6[2]));
+    
+    return retVal;
+}
+
+vector<Eigen::Triplet<float>> getHessianTriplets(Spring s) {
+    float koverr = -s.getSpringConstant()/s.getRestLength();
+    int p1_id = s.getEndpoints()[0]->getID();
+    int p2_id = s.getEndpoints()[1]->getID();
+
     vector<Eigen::Triplet<float>> retVal;
     retVal.push_back(Eigen::Triplet<float>(p1_id*3, p1_id*3, koverr));
     retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p1_id*3+1, koverr));
     retVal.push_back(Eigen::Triplet<float>(p1_id*3+2, p1_id*3+2, koverr));
+
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3, p2_id*3, koverr));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+1, p2_id*3+1, koverr));
+    retVal.push_back(Eigen::Triplet<float>(p1_id*3+2, p2_id*3+2, koverr));
+
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3, p1_id*3, koverr));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+1, p1_id*3+1, koverr));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p1_id*3+2, koverr));
+
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3, p2_id*3, koverr));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+1, p2_id*3+1, koverr));
+    retVal.push_back(Eigen::Triplet<float>(p2_id*3+2, p2_id*3+2, koverr));
+
+    return retVal;
+}
+
+Eigen::SparseMatrix<float> Simulation::evaluateHessian_Sparse_Basic() {
+
+    Eigen::SparseMatrix<float> newHessian(3*n, 3*n);
+    vector<Eigen::Triplet<float>> finalTriplets;
+    for (int i = 0; i < springs.size(); i++) {
+        
+        vector<Eigen::Triplet<float>> triplets = getHessianTriplets(springs[i]);
+        finalTriplets.insert(finalTriplets.end(), triplets.begin(), triplets.end());
+    }
+    
+    for (int i = 0; i < finalTriplets.size(); i++) {
+        newHessian.coeffRef(finalTriplets[i].row(), finalTriplets[i].col()) += finalTriplets[i].value();
+    }
+    
+    // if any external forces are imparting hessian values, add them here
+//    newHessian.setFromTriplets(finalTriplets.begin(), finalTriplets.end());
+    return massMatrix_Sparse - (timeStep*timeStep*newHessian);
+}
+
+Eigen::SparseMatrix<float> Simulation::evaluateHessian_Sparse(Eigen::VectorXf curGuessPosition) {
+
+    Eigen::SparseMatrix<float> newHessian(3*n, 3*n);
+    vector<Eigen::Triplet<float>> finalTriplets;
+    for (int i = 0; i < springs.size(); i++) {
+        int p1_id = springs[i].getEndpoints()[0]->getID();
+        int p2_id = springs[i].getEndpoints()[1]->getID();
+                
+
+        Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
+        Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
+        
+        vector<Eigen::Triplet<float>> triplets = getHessianTriplets(springs[i]);
+
+//        vector<Eigen::Triplet<float>> triplets = getHessianTriplets_Test(springs[i], p1_guessPosPortion, p2_guessPosPortion);
+        finalTriplets.insert(finalTriplets.end(), triplets.begin(), triplets.end());
+    }
+    
+    for (int i = 0; i < finalTriplets.size(); i++) {
+        //cout<<newHessian.coeffRef(finalTriplets[i].row(), finalTriplets[i].col())<<endl;
+        newHessian.coeffRef(finalTriplets[i].row(), finalTriplets[i].col()) += finalTriplets[i].value();
+    }
+    
+    // if any external forces are imparting hessian values, add them here
+//    newHessian.setFromTriplets(finalTriplets.begin(), finalTriplets.end());
+    return massMatrix_Sparse - (timeStep*timeStep*newHessian);
 }
 
 void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
@@ -267,12 +456,12 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
             newHessian(i, j) = 0;
         }
     }
-//    Eigen::SparseMatrix<float> newHessian(3*n, 3*n);
     for (int i = 0; i < springs.size(); i++) {
         vector<SpringEndpoint*> endpoints = springs[i].getEndpoints();
 
         int p1_id = endpoints[0]->getID();
         int p2_id = endpoints[1]->getID();
+                
 
         Eigen::Vector3f p1_guessPosPortion = Eigen::Vector3f(curGuessPosition[p1_id*3], curGuessPosition[p1_id*3 + 1], curGuessPosition[p1_id*3 + 2]);
         Eigen::Vector3f p2_guessPosPortion = Eigen::Vector3f(curGuessPosition[p2_id*3], curGuessPosition[p2_id*3 + 1], curGuessPosition[p2_id*3 + 2]);
@@ -288,7 +477,7 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
         newHessian(p1_id*3+2, p2_id*3) += hessianPortion(2, 3);
         newHessian(p1_id*3+2, p2_id*3+1) += hessianPortion(2, 4);
         newHessian(p1_id*3+2, p2_id*3+2) += hessianPortion(2, 5);
-        
+
         newHessian(p1_id*3, p1_id*3) += hessianPortion(0, 0);
         newHessian(p1_id*3, p1_id*3+1) += hessianPortion(0, 1);
         newHessian(p1_id*3, p1_id*3+2) += hessianPortion(0, 2);
@@ -308,7 +497,7 @@ void Simulation::evaluateHessian(Eigen::VectorXf curGuessPosition) {
         newHessian(p2_id*3+2, p1_id*3) += hessianPortion(5, 0);
         newHessian(p2_id*3+2, p1_id*3+1) += hessianPortion(5, 1);
         newHessian(p2_id*3+2, p1_id*3+2) += hessianPortion(5, 2);
-        
+
         newHessian(p2_id*3, p2_id*3) += hessianPortion(3, 3);
         newHessian(p2_id*3, p2_id*3+1) += hessianPortion(3, 4);
         newHessian(p2_id*3, p2_id*3+2) += hessianPortion(3, 5);
